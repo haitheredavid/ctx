@@ -13,7 +13,7 @@
       "extensions": [
         "hverlin.mise-vscode",
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
+        "biomejs.biome",
         "bradlc.vscode-tailwindcss"
       ]
     }

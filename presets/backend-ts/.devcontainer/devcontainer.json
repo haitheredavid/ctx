@@ -6,7 +6,7 @@
   "forwardPorts": [3000, 5432, 6379],
   "customizations": {
     "vscode": {
-      "extensions": ["hverlin.mise-vscode", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+      "extensions": ["hverlin.mise-vscode", "dbaeumer.vscode-eslint", "biomejs.biome"]
     }
   },
   "remoteUser": "vscode"

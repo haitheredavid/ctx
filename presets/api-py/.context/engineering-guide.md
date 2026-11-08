@@ -30,14 +30,14 @@ State command scope exactly. Do not say "tests pass" if `-k` filtered out covera
 - `ty check` strict. No implicit `Any`. Annotate generics fully (`list[int]`, not `list`).
 - Prefer composition over inheritance. Inheritance is for type substitutability, not code reuse.
 - No mutable default arguments. No mutable module-level state.
-- Imports: stdlib, third-party, first-party — three groups, each sorted. `ruff` enforces.
+- Imports: stdlib, third-party, first-party - three groups, each sorted. `ruff` enforces.
 - Async throughout. Every route handler, every client call, every dependency that touches I/O is `async`. No `requests`, no sync `httpx.Client`, no thread pool for I/O.
 
 ## Data Contracts
 
 Two kinds of data, two tools:
 
-**Internal value objects** — use `@dataclass`:
+**Internal value objects** - use `@dataclass`:
 ```python
 from dataclasses import dataclass
 
@@ -47,9 +47,9 @@ class UserId:
 ```
 - `frozen=True` makes instances hashable and forces explicit replace-via-constructor mutation.
 - `slots=True` for memory and to catch typos that would otherwise create stray attributes.
-- Internal data does not need runtime validation — the type system covers it.
+- Internal data does not need runtime validation - the type system covers it.
 
-**External boundaries** — use `pydantic.BaseModel`:
+**External boundaries** - use `pydantic.BaseModel`:
 ```python
 from pydantic import BaseModel, Field
 
@@ -109,9 +109,9 @@ tests/
 ## Errors
 
 - Define typed exceptions in `errors.py`. Register handlers with `app.exception_handler(MyError)` in the app factory.
-- Default envelope: `application/problem+json` (RFC 7807) — `{ "type", "title", "status", "detail", "instance" }`. TODO: confirm or override per house style.
+- Default envelope: `application/problem+json` (RFC 7807) - `{ "type", "title", "status", "detail", "instance" }`. TODO: confirm or override per house style.
 - Never leak tracebacks or upstream error bodies to clients. Log internally with the full context; respond with a safe envelope.
-- Map Pydantic `RequestValidationError` to `422` (FastAPI default) or remap to `400` with the same problem+json shape — pick one and stick to it.
+- Map Pydantic `RequestValidationError` to `422` (FastAPI default) or remap to `400` with the same problem+json shape - pick one and stick to it.
 - Each error response carries the request id (set in middleware) so logs and client reports correlate.
 
 ## Outbound HTTP (httpx)
@@ -125,7 +125,7 @@ tests/
 
 ## OpenAPI Export
 
-- FastAPI's `app.openapi()` is the authoritative schema — generated from Pydantic models and route signatures.
+- FastAPI's `app.openapi()` is the authoritative schema - generated from Pydantic models and route signatures.
 - Expose an export entry (e.g. `python -m <pkg>.openapi`) that prints `json.dumps(app.openapi())` to stdout. Downstream consumers (clients, gateway configs) run this in CI.
 - Commit a generated `openapi.json` in-repo only if a consumer pins to it; otherwise let downstream pipelines regenerate.
 - When models change in a way that breaks the schema, the export commits in the same PR as the model edit.
@@ -136,7 +136,7 @@ tests/
 - Integration tests build the app via the factory, then issue requests with `httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")`. No live server.
 - Override dependencies with `app.dependency_overrides[...]` for auth principals, settings, and clients. Reset overrides in fixture teardown.
 - Mock at the client boundary (a fake `AsyncClient` or a `respx` mounted transport), not inside service methods.
-- **Do not `unittest.mock.patch` first-party modules.** If a test feels like it needs that, the code under test is missing a seam — pass the dependency in instead.
+- **Do not `unittest.mock.patch` first-party modules.** If a test feels like it needs that, the code under test is missing a seam - pass the dependency in instead.
 - `tmp_path` for filesystem. `pytest.MonkeyPatch` for env vars before constructing `Settings`.
 - Reset any module-level singletons in fixture teardown. Better: do not have module-level singletons.
 
@@ -199,12 +199,12 @@ Rules:
 
 Metadata reads are fine: `pyproject.toml`, `uv.lock`, `pytest.ini`, `tox.ini`, `ruff.toml`, and public config files.
 
-Use `.env.example` only for variable names. Preserve unrelated dirty work — never revert files you did not intentionally change.
+Use `.env.example` only for variable names. Preserve unrelated dirty work - never revert files you did not intentionally change.
 
 ## Commits
 
 - **One concern per commit.** Do not bundle a refactor with a feature with a dep bump.
-- **Subject ≤ 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
+- **Subject <= 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
 - **Body explains *why*, not *what*.** The diff shows what.
 - **Lockfile updates commit with the source change that triggered them.** `uv.lock` rides with the `pyproject.toml` edit. Generated `openapi.json` (if committed) rides with the Pydantic model edit that produced it.
 - **Never commit secrets.** Real tokens, DSNs, bearer headers, cloud credentials. `.env.example` is for variable names only.
@@ -223,7 +223,7 @@ NOTES.md
 SCRATCH.md
 ```
 
-- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch — do not add it to `.gitignore`.
+- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch - do not add it to `.gitignore`.
 - Durable architecture, decisions, and short-lived focus notes belong in `.context/` (committed). Scratch belongs at root (ignored).
 - A plan worth keeping graduates into a dated design doc under `.context/active/` (see `.context/README.md`) or into the PR description before the scratch file is discarded. Do not park it in a root scratch file.
 

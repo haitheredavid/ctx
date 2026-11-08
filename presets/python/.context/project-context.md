@@ -12,11 +12,11 @@ Default assumption baked into this preset: a typed Python codebase managed with 
 
 ```
 entry point (main.py / __main__.py / CLI / app factory)
-  → Settings(BaseSettings)  ← env vars (only here)
-  → composition root wires services
-  → service modules (pure logic + adapters)
-  → external I/O (HTTP / DB / files) via narrow adapter classes
-  → typed results (@dataclass internally; pydantic at boundaries)
+  -> Settings(BaseSettings)  <- env vars (only here)
+  -> composition root wires services
+  -> service modules (pure logic + adapters)
+  -> external I/O (HTTP / DB / files) via narrow adapter classes
+  -> typed results (@dataclass internally; pydantic at boundaries)
 ```
 
 Source of truth for runtime config: the `Settings` instance. Source of truth for persistent data: TODO (DB / disk / external service). Domain modules are pure where possible; I/O sits behind adapter seams that can be swapped in tests.
@@ -30,7 +30,7 @@ Source of truth for runtime config: the `Settings` instance. Source of truth for
 | `src/<pkg>/__init__.py` | Public surface for the package. Keep narrow. |
 | `src/<pkg>/settings.py` | The `Settings(BaseSettings)` class. Only file that reads env. |
 | `src/<pkg>/main.py` or `__main__.py` | Composition root. Builds `Settings`, wires services, runs. |
-| `src/<pkg>/<domain>/` | Domain modules — value objects, services, adapters. |
+| `src/<pkg>/<domain>/` | Domain modules - value objects, services, adapters. |
 | `src/<pkg>/<domain>/adapters/` | I/O seams (HTTP clients, DB repos, file readers). |
 | `tests/` | Pytest suite. Mirrors `src/<pkg>/` layout. |
 | `tests/conftest.py` | Shared fixtures (no global mutable state). |
@@ -49,7 +49,7 @@ For each: where credentials come from, what is read vs written, what happens on 
 
 ## Durable Decisions
 
-Architecture and tooling choices worth keeping, stated as decisions — not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
+Architecture and tooling choices worth keeping, stated as decisions - not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
 
 - TODO: A decision this repo has committed to, and the one-line reason it holds.
 

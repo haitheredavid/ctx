@@ -8,7 +8,7 @@ Durable reference for working in the repo: tooling, commands, architecture, conv
 
 - Guides never describe development progress. No roadmaps, feature status, "current state" snapshots, or deferred-work lists.
 - If a guide needs to mention in-flight work, that content belongs in an active doc instead.
-- Durable decisions — the "why" behind an architecture or tooling choice — live in `project-context.md`, not in a separate progress log.
+- Durable decisions - the "why" behind an architecture or tooling choice - live in `project-context.md`, not in a separate progress log.
 
 Current guides:
 
@@ -26,4 +26,4 @@ Ephemeral implementation documents: TDDs, design docs, migration plans, findings
 
 ## Not the same as root scratch
 
-`active/` docs are committed, human-reviewed design docs. They are distinct from the transient root scratch files (`PLAN.md`, `TODO.md`, `NOTES.md`, `SCRATCH.md`) described under "Local Agent Scratch" in `engineering-guide.md` — those are one-session, gitignored, and never durable. Do not conflate the two.
+`active/` docs are committed, human-reviewed design docs. They are distinct from the transient root scratch files (`PLAN.md`, `TODO.md`, `NOTES.md`, `SCRATCH.md`) described under "Local Agent Scratch" in `engineering-guide.md` - those are one-session, gitignored, and never durable. Do not conflate the two.

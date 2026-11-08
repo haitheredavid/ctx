@@ -29,13 +29,13 @@ State command scope exactly. Do not say "tests pass" if `-k` filtered out covera
 - `ty check` strict. No implicit `Any`. Annotate generics fully (`list[int]`, not `list`).
 - Prefer composition over inheritance. Inheritance is for type substitutability, not code reuse.
 - No mutable default arguments. No mutable module-level state (constants are fine if truly immutable).
-- Imports: stdlib, third-party, first-party — three groups, each sorted. `ruff` enforces.
+- Imports: stdlib, third-party, first-party - three groups, each sorted. `ruff` enforces.
 
 ## Data Contracts
 
 Two kinds of data, two tools:
 
-**Internal value objects** — use `@dataclass`:
+**Internal value objects** - use `@dataclass`:
 ```python
 from dataclasses import dataclass
 
@@ -45,9 +45,9 @@ class UserId:
 ```
 - `frozen=True` makes instances hashable and forces explicit replace-via-constructor mutation.
 - `slots=True` for memory and to catch typos that would otherwise create stray attributes.
-- Internal data does not need runtime validation — the type system covers it.
+- Internal data does not need runtime validation - the type system covers it.
 
-**External boundaries** — use `pydantic.BaseModel`:
+**External boundaries** - use `pydantic.BaseModel`:
 ```python
 from pydantic import BaseModel, Field
 
@@ -77,8 +77,8 @@ tests/
     test_services.py
 ```
 
-- One package per top-level concern. Avoid deep nesting beyond 2–3 levels.
-- `__init__.py` files stay slim — they document what is public, not what exists.
+- One package per top-level concern. Avoid deep nesting beyond 2-3 levels.
+- `__init__.py` files stay slim - they document what is public, not what exists.
 - Adapters are thin: convert in, call out, convert back. No business logic.
 
 ## Web / Framework Patterns (Optional)
@@ -87,15 +87,15 @@ If this codebase is a web service or worker, follow these:
 
 - HTTP framework TODO (FastAPI / Litestar / Starlette / Flask). Route handlers validate via `BaseModel`, delegate to services, return typed responses.
 - Async vs sync: pick one stance per service and stick to it. Mixing is a maintenance trap.
-- TODO: ORM (SQLAlchemy / SQLModel / none) — repos hide the ORM behind typed methods.
-- TODO: background work (RQ / Celery / arq / cron + script) — workers reuse services; queue is just transport.
+- TODO: ORM (SQLAlchemy / SQLModel / none) - repos hide the ORM behind typed methods.
+- TODO: background work (RQ / Celery / arq / cron + script) - workers reuse services; queue is just transport.
 
 ## Testing
 
 - Pytest. Test modules mirror `src/<pkg>/` paths.
-- Fixtures in `conftest.py`. No global state — every fixture is explicit per-test.
+- Fixtures in `conftest.py`. No global state - every fixture is explicit per-test.
 - `tmp_path` for filesystem. `pytest.MonkeyPatch` (via the `monkeypatch` fixture) for env vars.
-- **Do not `unittest.mock.patch` first-party modules.** If a test feels like it needs that, the code under test is missing a seam — pass the dependency in instead.
+- **Do not `unittest.mock.patch` first-party modules.** If a test feels like it needs that, the code under test is missing a seam - pass the dependency in instead.
 - Third-party SDKs may be patched at their import site, but prefer a thin adapter you can replace with a fake.
 - Reset module-level singletons (if any) in fixture teardown. Better: do not have module-level singletons.
 
@@ -157,12 +157,12 @@ Rules:
 
 Metadata reads are fine: `pyproject.toml`, `uv.lock`, `pytest.ini`, `tox.ini`, `ruff.toml`, and public config files.
 
-Use `.env.example` only for variable names. Preserve unrelated dirty work — never revert files you did not intentionally change.
+Use `.env.example` only for variable names. Preserve unrelated dirty work - never revert files you did not intentionally change.
 
 ## Commits
 
 - **One concern per commit.** Do not bundle a refactor with a feature with a dep bump.
-- **Subject ≤ 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
+- **Subject <= 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
 - **Body explains *why*, not *what*.** The diff shows what.
 - **Lockfile updates commit with the source change that triggered them.** `uv.lock` rides with the `pyproject.toml` edit. Generated OpenAPI or stub artifacts (if any) commit with the model edit that produced them.
 - **Never commit secrets.** Real tokens, DSNs, bearer headers, cloud credentials. `.env.example` is for variable names only.
@@ -181,7 +181,7 @@ NOTES.md
 SCRATCH.md
 ```
 
-- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch — do not add it to `.gitignore`.
+- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch - do not add it to `.gitignore`.
 - Durable architecture, decisions, and short-lived focus notes belong in `.context/` (committed). Scratch belongs at root (ignored).
 - A plan worth keeping graduates into a dated design doc under `.context/active/` (see `.context/README.md`) or into the PR description before the scratch file is discarded. Do not park it in a root scratch file.
 

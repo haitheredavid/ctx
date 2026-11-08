@@ -11,11 +11,11 @@ Toolchain: Node 26 + pnpm 12, pinned in `mise.toml`. Run `mise install` once.
 | `mise run install` | Install deps from lockfile. (`pnpm install`) |
 | `mise run typecheck` | `tsc --noEmit`. Run before claiming type safety. (`pnpm run typecheck`) |
 | `mise run lint` | Biome or ESLint. (`pnpm run lint`) |
-| `mise run build` | `tsc -p tsconfig.build.json` → `dist/`. Run before claiming the package is shippable. (`pnpm run build`) |
+| `mise run build` | `tsc -p tsconfig.build.json` -> `dist/`. Run before claiming the package is shippable. (`pnpm run build`) |
 | `mise run test` | Vitest. State precise scope (unit / contract / snapshot). (`pnpm run test`) |
 | `mise run changeset` | Record an upcoming user-facing change (interactive). (`pnpm run changeset`) |
-| `mise run version` | `changeset version` — bumps `package.json` and updates `CHANGELOG.md`. (`pnpm run version`) |
-| `mise run release` | `build && changeset publish` — publishes to npm using the active token. (`pnpm run release`) |
+| `mise run version` | `changeset version` - bumps `package.json` and updates `CHANGELOG.md`. (`pnpm run version`) |
+| `mise run release` | `build && changeset publish` - publishes to npm using the active token. (`pnpm run release`) |
 | `mise run check` | typecheck + lint + test. |
 
 State command scope exactly. Do not say "all tests pass" unless the script you ran covers every suite.
@@ -26,14 +26,14 @@ State command scope exactly. Do not say "all tests pass" unless the script you r
 - ESM-first (`"type": "module"`). Use `.ts` on relative imports when tsc rewrites them; alternatively configure Node subpath imports (`"imports": { "#src/*": "./src/*.ts" }`) for extension-free internal paths.
 - Two configs: `tsconfig.json` for editor + lint (may include `src/__tests__/`), `tsconfig.build.json` for emission (excludes tests, sets `outDir: dist`, `declaration: true`, `declarationMap: true`, `sourceMap: true`).
 - Avoid `any`. If unavoidable, isolate it at one SDK call site and comment.
-- All public surface is fully typed. `.d.ts` is shipped — consumers rely on it.
+- All public surface is fully typed. `.d.ts` is shipped - consumers rely on it.
 
 ## Public API
 
 - `src/index.ts` is the **only** re-export site. It re-exports the named values and types that form the contract.
-- Anything not re-exported from `src/index.ts` is private, even if technically importable. Deep imports (`<pkg>/dist/internal.js`) are not part of the contract — consumers who reach for them are on their own.
-- Breaking the public surface — removing an export, renaming, changing a signature, narrowing a return type — requires a `major` changeset.
-- Additive changes — new exports, new optional params, widened return types — require a `minor` changeset.
+- Anything not re-exported from `src/index.ts` is private, even if technically importable. Deep imports (`<pkg>/dist/internal.js`) are not part of the contract - consumers who reach for them are on their own.
+- Breaking the public surface - removing an export, renaming, changing a signature, narrowing a return type - requires a `major` changeset.
+- Additive changes - new exports, new optional params, widened return types - require a `minor` changeset.
 - Bugfixes and internal refactors that leave the contract intact require a `patch` changeset.
 
 ## Build & Distribution
@@ -65,7 +65,7 @@ State command scope exactly. Do not say "all tests pass" unless the script you r
 
 - No `node:*` imports in `src/` (CLI file is the documented exception).
 - No `window`, `document`, `global`, `process`. Use `globalThis` for cross-runtime access.
-- Crypto, date/time, fetch: use standard ECMAScript APIs (`crypto.subtle`, `Date`, `fetch`) — they exist in Node 18+, modern browsers, Bun, Deno, and workers. If a consumer needs to inject a custom provider, accept it as an option.
+- Crypto, date/time, fetch: use standard ECMAScript APIs (`crypto.subtle`, `Date`, `fetch`) - they exist in Node 18+, modern browsers, Bun, Deno, and workers. If a consumer needs to inject a custom provider, accept it as an option.
 - If a feature genuinely requires Node, isolate it behind a separate subpath export (`<pkg>/node`) and document the runtime requirement. Do not poison the default export.
 
 ## Tests
@@ -81,7 +81,7 @@ State command scope exactly. Do not say "all tests pass" unless the script you r
 Delete this section if `bin` is not set in `package.json`.
 
 - `src/cli.ts` is the only file allowed `node:*` imports (`node:process`, `node:fs`, `node:path`, etc.).
-- The CLI is a thin wrapper: parse argv → call into the library → print result → set exit code. No business logic in the CLI itself.
+- The CLI is a thin wrapper: parse argv -> call into the library -> print result -> set exit code. No business logic in the CLI itself.
 - Argv parsing: TODO (`citty` / `commander` / `node:util.parseArgs`). `parseArgs` is zero-dep but verbose; `citty`/`commander` are nicer for subcommands.
 - Exit codes: `0` success; non-zero on error. Document each non-zero code in `README.md`.
 - Streams: results to **stdout**, diagnostics and errors to **stderr**. Never mix.
@@ -93,17 +93,17 @@ Delete this section if `bin` is not set in `package.json`.
 Workflow per user-facing PR:
 
 1. Write code + tests.
-2. `<pkg> run changeset` — pick patch / minor / major and write one sentence describing the change from a consumer's perspective. Commit the generated `.changeset/*.md` alongside the code.
+2. `mise run changeset` - pick patch / minor / major and write one sentence describing the change from a consumer's perspective. Commit the generated `.changeset/*.md` alongside the code.
 3. Merge.
-4. On the release branch: `<pkg> run version` — bumps `package.json`, updates `CHANGELOG.md`, deletes consumed `.changeset/*.md`. Commit.
-5. `<pkg> run release` — runs `build` then `changeset publish`. Uses the npm token in the active environment.
+4. On the release branch: `mise run version` - bumps `package.json`, updates `CHANGELOG.md`, deletes consumed `.changeset/*.md`. Commit.
+5. `mise run release` - runs `build` then `changeset publish`. Uses the npm token in the active environment.
 
 Rules:
 
 - Every user-facing PR includes a `.changeset/` entry. Internal-only PRs (CI, docs, tests, refactors that change nothing observable) do not.
 - The first release should be rehearsed: `npm publish --dry-run` to confirm the tarball contents before `release`.
 - Pre-1.0 (`0.x.y`): minor = breaking. Treat minor changesets as the breaking-change channel until you cut 1.0.
-- Yanking is forbidden — release a patch that fixes or reverts instead.
+- Yanking is forbidden - release a patch that fixes or reverts instead.
 
 ## Search Scope
 
@@ -142,7 +142,7 @@ export function createClient(opts: ClientOptions) { /* ... */ }
 
 Rules:
 
-- No `process.env.X` in `src/`. CLI (`src/cli.ts`) is the documented exception — but it parses env once, hands typed values to the library, and never lets ambient env reach internal modules.
+- No `process.env.X` in `src/`. CLI (`src/cli.ts`) is the documented exception - but it parses env once, hands typed values to the library, and never lets ambient env reach internal modules.
 - Tests construct option objects directly. They do not mutate `process.env`.
 - Document defaults at the call site (in the option type's JSDoc and in `README.md`), not via runtime env lookups.
 
@@ -159,12 +159,12 @@ Rules:
 
 Metadata reads are fine: `package.json`, `tsconfig*.json`, `lockfile`, `vitest.config.ts`, `.changeset/config.json`.
 
-Use `.env.example` only for variable names (rare for libraries). Preserve unrelated dirty work — never revert files you did not intentionally change.
+Use `.env.example` only for variable names (rare for libraries). Preserve unrelated dirty work - never revert files you did not intentionally change.
 
 ## Commits
 
 - **One concern per commit.** Do not bundle a refactor with a feature with a dep bump.
-- **Subject ≤ 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
+- **Subject <= 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
 - **Body explains *why*, not *what*.** The diff shows what.
 - **Every user-facing change ships a `.changeset/` entry in the same commit (or the immediately following one).** PR review checks for it.
 - **Generated artifacts ride with their source change.** `CHANGELOG.md` updates land in the same PR as the `changeset version` run. Lockfile updates commit with the `package.json` change.
@@ -184,7 +184,7 @@ NOTES.md
 SCRATCH.md
 ```
 
-- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch — do not add it to `.gitignore`.
+- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch - do not add it to `.gitignore`.
 - Durable architecture, decisions, and short-lived focus notes belong in `.context/` (committed). Scratch belongs at root (ignored).
 - A plan worth keeping graduates into a dated design doc under `.context/active/` (see `.context/README.md`) or into the PR description before the scratch file is discarded. Do not park it in a root scratch file.
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { exists } from "../src/detect.ts";
@@ -39,6 +39,27 @@ test("refuses to overwrite and writes nothing when any destination exists", asyn
   await expect(applyPreset({ preset: "python", target: tmp, force: false })).rejects.toThrow("AGENTS.md");
   expect(await exists(join(tmp, "mise.toml"))).toBe(false);
   expect(await readFile(join(tmp, "AGENTS.md"), "utf8")).toBe("mine\n");
+  expect((await readdir(tmp)).sort()).toEqual(["AGENTS.md"]);
+});
+
+test("refuses to write through a dangling symlink and creates nothing", async () => {
+  const outside = join(tmp, "..", `outside-${crypto.randomUUID()}`);
+  await symlink(outside, join(tmp, "AGENTS.md"));
+  try {
+    await expect(applyPreset({ preset: "python", target: tmp, force: true })).rejects.toThrow(
+      "refusing to write through symlink",
+    );
+    expect(await exists(outside)).toBe(false);
+    expect((await readdir(tmp)).sort()).toEqual(["AGENTS.md"]);
+  } finally {
+    await rm(outside, { force: true });
+  }
+});
+
+test("rejects a target that is a file", async () => {
+  const target = join(tmp, "file");
+  await writeFile(target, "x");
+  await expect(applyPreset({ preset: "python", target, force: false })).rejects.toThrow(`${target} is not a directory`);
 });
 
 test("force overwrites existing files with preset content", async () => {

@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { exists } from "../src/detect.ts";
+import { PRESETS_DIR } from "../src/paths.ts";
 import { type ScaffoldOptions, type ScaffoldResult, scaffold } from "../src/scaffold.ts";
 
 const BASE_FILES = [
@@ -65,6 +66,15 @@ function contentOf(results: ScaffoldResult[], relPath: string): string {
 
 function agentsContent(results: ScaffoldResult[]): string {
   return contentOf(results, "AGENTS.md");
+}
+
+function allContent(results: ScaffoldResult[]): string {
+  return results.map((r) => r.content).join("\n");
+}
+
+async function writeSkill(root: string, dir: string, text: string): Promise<void> {
+  await mkdir(join(tmp, root, "skills", dir), { recursive: true });
+  await writeFile(join(tmp, root, "skills", dir, "SKILL.md"), text);
 }
 
 test("dry-run renders mise tasks, tools, package scripts, and workspaces without writing", async () => {
@@ -190,4 +200,130 @@ test("preset without repo mise.toml keeps preset commands and plans its mise.tom
 
 test("unknown preset is rejected", async () => {
   await expect(scaffold(opts({ preset: "nope" }))).rejects.toThrow("unknown preset 'nope'");
+});
+
+test("preset '' is treated as a preset name and rejected", async () => {
+  await expect(scaffold(opts({ preset: "" }))).rejects.toThrow("unknown preset ''");
+});
+
+test("MCP command keeps only the first token's basename", async () => {
+  await writeJson(join(tmp, ".mcp.json"), { mcpServers: { x: { command: "npx -y pkg --token cmdsecret" } } });
+
+  const results = await scaffold(opts());
+  expect(agentsContent(results)).toContain("- `x` - stdio (`npx`).");
+  expect(allContent(results)).not.toContain("cmdsecret");
+});
+
+test("Cursor and JSONC VS Code MCP configs are grouped in source order without headers", async () => {
+  await mkdir(join(tmp, ".cursor"));
+  await writeJson(join(tmp, ".cursor", "mcp.json"), { mcpServers: { c: {} } });
+  await mkdir(join(tmp, ".vscode"));
+  await writeFile(
+    join(tmp, ".vscode", "mcp.json"),
+    `{
+  // VS Code allows comments and trailing commas
+  "servers": {
+    "v": { "type": "http", "url": "https://v.example.com", "headers": { "Authorization": "Bearer hdrsecret" }, },
+  },
+}
+`,
+  );
+
+  const results = await scaffold(opts());
+  const content = agentsContent(results);
+  const cursor = content.indexOf("Configured in `.cursor/mcp.json`:");
+  const vscode = content.indexOf("Configured in `.vscode/mcp.json`:");
+  expect(cursor).toBeGreaterThanOrEqual(0);
+  expect(vscode).toBeGreaterThan(cursor);
+  expect(content).toContain("- `c` - transport not recognized; see `.cursor/mcp.json`.");
+  expect(content).toContain("- `v` - http.");
+  expect(allContent(results)).not.toContain("hdrsecret");
+});
+
+test("malformed Codex MCP config is reported without parser text", async () => {
+  await mkdir(join(tmp, ".codex"));
+  await writeFile(join(tmp, ".codex", "config.toml"), '[mcp_servers.x]\ncommand = "ghp_secret\n');
+
+  const error = await scaffold(opts()).then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(error).toBeInstanceOf(Error);
+  expect((error as Error).message).toBe("Failed to parse MCP config .codex/config.toml");
+});
+
+test("mise run commands and package script bodies never reach generated content", async () => {
+  await writeFile(join(tmp, "mise.toml"), '[tasks.boot]\nrun = "TOKEN=runsecret x"\n');
+  await writeJson(join(tmp, "package.json"), { scripts: { dev: "API_KEY=scriptsecret tsx" } });
+
+  const content = allContent(await scaffold(opts()));
+  expect(content).not.toContain("runsecret");
+  expect(content).not.toContain("scriptsecret");
+});
+
+test("write refuses to follow a dangling AGENTS.md symlink", async () => {
+  const outside = join(tmp, "..", `outside-${crypto.randomUUID()}`);
+  await symlink(outside, join(tmp, "AGENTS.md"));
+  try {
+    await expect(scaffold(opts({ write: true }))).rejects.toThrow("refusing to write through symlink");
+    expect(await exists(outside)).toBe(false);
+  } finally {
+    await rm(outside, { force: true });
+  }
+});
+
+test("package overlays skip workspaces outside the target", async () => {
+  const repo = join(tmp, "repo");
+  const sibling = join(tmp, "sibling");
+  await mkdir(repo);
+  await mkdir(sibling);
+  await writeJson(join(sibling, "package.json"), { name: "sibling" });
+  await writeJson(join(repo, "package.json"), { name: "root", workspaces: ["../sibling"] });
+
+  await scaffold(opts({ target: repo, write: true, packageOverlays: true }));
+  expect(await exists(join(repo, "AGENTS.md"))).toBe(true);
+  expect(await exists(join(sibling, "AGENTS.md"))).toBe(false);
+});
+
+test("preset with repo mise.toml never touches it, even with force, and keeps preset headings", async () => {
+  await writeFile(join(tmp, "mise.toml"), MISE_TOML);
+
+  const results = await scaffold(opts({ preset: "api-ts", write: true, force: true }));
+  expect(results.map((r) => r.relPath)).not.toContain("mise.toml");
+  expect(await readFile(join(tmp, "mise.toml"), "utf8")).toBe(MISE_TOML);
+
+  for (const rel of ["AGENTS.md", ".context/engineering-guide.md"]) {
+    const [planned, source] = [contentOf(results, rel), await readFile(join(PRESETS_DIR, "api-ts", rel), "utf8")].map(
+      (text) => text.split("\n").filter((line) => line.startsWith("## ")),
+    );
+    expect(planned).toEqual(source);
+  }
+});
+
+test("skill name comes from frontmatter, not the directory", async () => {
+  await writeSkill(".claude", "deploy-dir", "---\nname: deploy\ndescription: Ship it.\n---\n");
+  expect(agentsContent(await scaffold(opts()))).toContain(
+    "- `deploy` (`.claude/skills/deploy-dir/SKILL.md`) - Ship it.",
+  );
+});
+
+test("CRLF frontmatter is parsed", async () => {
+  await writeSkill(".claude", "win", "---\r\nname: crlf\r\ndescription: Windows endings.\r\n---\r\nbody\r\n");
+  expect(agentsContent(await scaffold(opts()))).toContain(
+    "- `crlf` (`.claude/skills/win/SKILL.md`) - Windows endings.",
+  );
+});
+
+test("frontmatter without a closing fence is ignored", async () => {
+  await writeSkill(".claude", "open", "---\nname: other\ndescription: Never closed.\n");
+  const content = agentsContent(await scaffold(opts()));
+  expect(content).toContain("- `open` (`.claude/skills/open/SKILL.md`) - (no description)");
+  expect(content).not.toContain("Never closed.");
+});
+
+test("long skill descriptions are truncated to 120 characters", async () => {
+  await writeSkill(".agents", "long", `---\ndescription: ${"x".repeat(130)}\n---\n`);
+  expect(agentsContent(await scaffold(opts()))).toContain(
+    `- \`long\` (\`.agents/skills/long/SKILL.md\`) - ${"x".repeat(117)}...\n`,
+  );
 });

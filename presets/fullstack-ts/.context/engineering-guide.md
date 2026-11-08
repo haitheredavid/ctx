@@ -27,7 +27,7 @@ State command scope exactly. Do not say "all tests pass" unless the script you r
 src/
   client/   # browser-only code
   server/   # node-only code
-  shared/   # cross-boundary types & Zod schemas — pure, no runtime imports of client/server
+  shared/   # cross-boundary types & Zod schemas - pure, no runtime imports of client/server
 ```
 
 - **`src/client/` must not import from `src/server/`.** Lint rule recommended (`no-restricted-imports`).
@@ -40,7 +40,7 @@ src/
 - One `tsconfig.base.json` with strict settings; per-side configs override `lib`, `jsx`, `moduleResolution`.
 - Server: ESM, `moduleResolution: "NodeNext"` or `"Bundler"` with tsx.
 - Client: `jsx: "react-jsx"`, `moduleResolution: "Bundler"`, lib includes `DOM`.
-- Shared: no DOM, no Node — keep it portable.
+- Shared: no DOM, no Node - keep it portable.
 
 ## Contracts: src/shared/
 
@@ -62,17 +62,17 @@ src/
 ## Server Patterns
 
 - Hono + `@hono/node-server` + Zod validation. Same rules as `backend-ts` preset.
-- Route handlers: validate → service → respond. No business logic.
+- Route handlers: validate -> service -> respond. No business logic.
 - Services own all DB and provider-SDK access.
 - Drizzle schema in `src/server/db/schema.ts` is the source of truth.
 - Pino logger; child logger per request with a correlation id that the client can also send.
-- TODO: auth (session cookie / bearer). Whichever, expose a `/api/auth/session` (or equivalent) the client can call to derive logged-in state — do not duplicate auth state in client storage.
+- TODO: auth (session cookie / bearer). Whichever, expose a `/api/auth/session` (or equivalent) the client can call to derive logged-in state - do not duplicate auth state in client storage.
 
 ## Dev Server
 
-- `vite.config.ts` proxies `/api` → server port (default `localhost:3000` or whatever your server listens on).
+- `vite.config.ts` proxies `/api` -> server port (default `localhost:3000` or whatever your server listens on).
 - HMR for client. tsx watch restarts the server on `src/server/` and `src/shared/` changes.
-- One terminal command (`<pkg> run dev`) brings up both — keep it that way.
+- One terminal command (`mise run dev`) brings up both - keep it that way.
 
 ## Build & Deploy
 
@@ -110,9 +110,9 @@ Metadata reads inside excluded dirs are fine when the file itself is the source 
 
 ## Settings
 
-Each side has its own typed settings seam. They never share — server env stays on the server, browser env stays in the bundle.
+Each side has its own typed settings seam. They never share - server env stays on the server, browser env stays in the bundle.
 
-**Server** — `src/server/config.ts` is the only module that reads `process.env`:
+**Server** - `src/server/config.ts` is the only module that reads `process.env`:
 
 ```ts
 import { z } from "zod";
@@ -128,7 +128,7 @@ export const loadConfig = () => Env.parse(process.env);
 
 Add auth-related vars (e.g. `SESSION_SECRET`) when the auth lib is chosen.
 
-**Client** — `src/client/env.ts` is the only module that reads `import.meta.env`:
+**Client** - `src/client/env.ts` is the only module that reads `import.meta.env`:
 
 ```ts
 import { z } from "zod";
@@ -146,7 +146,7 @@ export const env = Env.parse(import.meta.env);
 Rules:
 
 - `src/server/` never reads `import.meta.env`. `src/client/` never reads `process.env`.
-- Backend secrets never get a `VITE_*` prefix — Vite would ship them to the browser.
+- Backend secrets never get a `VITE_*` prefix - Vite would ship them to the browser.
 - `src/shared/` has no settings module. Shared code takes typed values in as arguments.
 - Tests build the config from overrides; do not mutate `process.env` or `import.meta.env` globally.
 
@@ -162,12 +162,12 @@ Rules:
 
 Metadata reads are fine: `package.json`, `tsconfig*.json`, lock files, public config files (`vite.config.ts`, `drizzle.config.ts`, `vitest.config.ts`, `tailwind.config.ts`, etc.).
 
-Use `.env.example` only for variable names. Preserve unrelated dirty work — never revert files you did not intentionally change.
+Use `.env.example` only for variable names. Preserve unrelated dirty work - never revert files you did not intentionally change.
 
 ## Commits
 
 - **One concern per commit.** Do not bundle a refactor with a feature with a dep bump.
-- **Subject ≤ 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
+- **Subject <= 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
 - **Body explains *why*, not *what*.** The diff shows what.
 - **Generated artifacts and contract changes ride with their source.** Drizzle migration SQL commits with the `schema.ts` edit. A `src/shared/` contract change commits with the consuming-side edits so client + server stay in lockstep. Lockfile updates commit with the `package.json` change that triggered them.
 - **Never commit secrets.** Real tokens, DSNs, bearer headers, cloud credentials. `.env.example` is for variable names only.
@@ -186,7 +186,7 @@ NOTES.md
 SCRATCH.md
 ```
 
-- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch — do not add it to `.gitignore`.
+- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch - do not add it to `.gitignore`.
 - Durable architecture, decisions, and short-lived focus notes belong in `.context/` (committed). Scratch belongs at root (ignored).
 - A plan worth keeping graduates into a dated design doc under `.context/active/` (see `.context/README.md`) or into the PR description before the scratch file is discarded. Do not park it in a root scratch file.
 

@@ -4,27 +4,27 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 
 ## Project Context
 
-- [.context/project-context.md](.context/project-context.md) — what this API is, architecture, ownership map, integrations, durable decisions.
-- [.context/engineering-guide.md](.context/engineering-guide.md) — commands, Python standards, FastAPI patterns, safety.
-- [.context/writing-tdds.md](.context/writing-tdds.md) — how to write a Technical Design Document for this repo.
-- [.context/README.md](.context/README.md) — `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
+- [.context/project-context.md](.context/project-context.md) - what this API is, architecture, ownership map, integrations, durable decisions.
+- [.context/engineering-guide.md](.context/engineering-guide.md) - commands, Python standards, FastAPI patterns, safety.
+- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document for this repo.
+- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
 
 ## Stack
 
-Python HTTP API. FastAPI + Pydantic for request/response models, `pydantic-settings` for env-driven configuration, `httpx.AsyncClient` for outbound calls, `pytest` + `httpx.AsyncClient` (via `pytest-asyncio`) for tests, `uv` for environment management, `ruff` for lint/format, `ty` for static type checking. Async throughout. Storage is external — this preset does not assume an in-process database; persistence sits behind outbound clients or other services.
+Python HTTP API. FastAPI + Pydantic for request/response models, `pydantic-settings` for env-driven configuration, `httpx.AsyncClient` for outbound calls, `pytest` + `httpx.AsyncClient` (via `pytest-asyncio`) for tests, `uv` for environment management, `ruff` for lint/format, `ty` for static type checking. Async throughout. Storage is external - this preset does not assume an in-process database; persistence sits behind outbound clients or other services.
 
 ## Commands
 
 Toolchain: Python 3.14 + uv, pinned in `mise.toml`. Run `mise install` once.
 
 ```
-mise run install    # uv sync — install/update from uv.lock
-mise run dev        # uv run uvicorn <pkg>.main:app --reload — dev server (TODO: confirm entry)
-mise run test       # uv run pytest — tests
+mise run install    # uv sync - install/update from uv.lock
+mise run dev        # uv run uvicorn <pkg>.main:app --reload - dev server (TODO: confirm entry)
+mise run test       # uv run pytest - tests
 mise run lint       # uv run ruff check .
 mise run format     # uv run ruff format .
-mise run typecheck  # uv run ty check — static type check
-mise run openapi    # uv run python -m <pkg>.openapi — TODO: dump openapi.json from app.openapi()
+mise run typecheck  # uv run ty check - static type check
+mise run openapi    # uv run python -m <pkg>.openapi - TODO: dump openapi.json from app.openapi()
 mise run check      # lint + typecheck + test
 uv run pytest -k <expr>              # filtered tests
 ```
@@ -37,7 +37,7 @@ Cite exact command scope. Do not claim a command runs every test unless `pyproje
 - `from __future__ import annotations` at the top of every module. Type hints on every public function.
 - `ty check` strict. No implicit `Any` in the codebase.
 - Async throughout: every route handler and every outbound call is `async`. No sync I/O inside request handling. Mixing sync and async is a maintenance trap.
-- `pydantic.BaseModel` at every trust boundary — HTTP requests/responses and outbound responses. Validate once at the edge, convert to internal `@dataclass` for downstream code.
+- `pydantic.BaseModel` at every trust boundary - HTTP requests/responses and outbound responses. Validate once at the edge, convert to internal `@dataclass` for downstream code.
 - `Settings(BaseSettings)` from `pydantic-settings` is the **only** path env vars take into the app. Constructed once at startup, passed explicitly via FastAPI dependencies. Never `os.environ.get(...)` in business logic.
 - One `httpx.AsyncClient` per app lifetime, created in the lifespan handler and injected via dependency. Do not construct clients per request.
 - Auth via FastAPI dependency (`Security(...)`). TODO: provider (JWT / session / API key / mTLS).
@@ -52,11 +52,11 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 
 ## MCP Servers
 
-- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`).
 
 ## Skills
 
-- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`).
 
 ## Where To Edit
 
@@ -67,7 +67,7 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 | `uv.lock` | Resolved dependency lockfile. Do not hand-edit. |
 | `src/<pkg>/settings.py` | `Settings(BaseSettings)`. The one place env vars are read. |
 | `src/<pkg>/main.py` | FastAPI app factory. Builds `Settings`, mounts routers, registers handlers, runs lifespan. |
-| `src/<pkg>/routes/` | FastAPI routers per domain. Validate → service → response. |
+| `src/<pkg>/routes/` | FastAPI routers per domain. Validate -> service -> response. |
 | `src/<pkg>/services/` | Business logic. The only layer that calls outbound clients. |
 | `src/<pkg>/clients/` | `httpx.AsyncClient` adapters for upstream APIs. Validate responses with Pydantic. |
 | `src/<pkg>/auth.py` | Auth dependency (TODO: provider). Yields the verified principal. |

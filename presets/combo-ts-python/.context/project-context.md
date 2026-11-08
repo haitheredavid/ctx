@@ -12,19 +12,19 @@ Default assumption baked into this preset: a TypeScript single-page app (`web/`)
 
 ```
 user interaction
-  → React component (web/, local state)
-  → typed API client (web/src/api-client/, generated types)
-  → HTTP /api/* (Vite proxy in dev, direct in prod)
-  → FastAPI route (api/, pydantic validation)
-  → service module (api/)
-  → persistence / external SDK
-  → typed response (BaseModel)
-  → React render
+  -> React component (web/, local state)
+  -> typed API client (web/src/api-client/, generated types)
+  -> HTTP /api/* (Vite proxy in dev, direct in prod)
+  -> FastAPI route (api/, pydantic validation)
+  -> service module (api/)
+  -> persistence / external SDK
+  -> typed response (BaseModel)
+  -> React render
 
 # contract regeneration
 api/<pkg>/scripts/emit_openapi.py
-  → shared/openapi.json (committed)
-  → web/src/api-client/types.ts (generated, committed)
+  -> shared/openapi.json (committed)
+  -> web/src/api-client/types.ts (generated, committed)
 ```
 
 Source of truth for UI state: web client. Source of truth for domain data: API. Source of truth for the contract between them: pydantic models in `api/`. Web only consumes the schema; it never authors it.
@@ -60,7 +60,7 @@ The web client integrates only with this repo's API. If it ever needs to talk to
 
 ## Durable Decisions
 
-Architecture and tooling choices worth keeping, stated as decisions — not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
+Architecture and tooling choices worth keeping, stated as decisions - not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
 
 - TODO: A decision this repo has committed to, and the one-line reason it holds.
 
@@ -71,4 +71,4 @@ Architecture and tooling choices worth keeping, stated as decisions — not stat
 - No direct DB or external-SDK access from the web client.
 - No pydantic model lives in `web/`. Web consumes generated TS types only.
 - No `os.environ.get(...)` outside `Settings` in `api/`.
-- No business logic in FastAPI route functions — they validate and delegate.
+- No business logic in FastAPI route functions - they validate and delegate.

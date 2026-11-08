@@ -46,7 +46,7 @@ Committed choices. Not status/progress — in-flight work + known gaps live in `
 - CLI has zero runtime deps (Bun + `node:` stdlib only).
 - Presets ship `mise.toml` with tasks matching docs 1:1, enforced by `test/presets.test.ts`.
 - Preset devcontainers install mise + run `mise install`.
-- `ctx scaffold` defaults to dry-run, skips existing files unless `--force`, reads only safe metadata (incl. `mise.toml`) — never secret-bearing files.
+- `ctx scaffold` defaults to dry-run, skips existing files unless `--force`, reads only safe metadata (incl. `mise.toml`) - never secret-bearing files. Detection parses MCP config files and `SKILL.md` frontmatter but emits only server name, transport, and a sanitized command name; never args/env/headers/URL text, script bodies, or mise `run` text.
 - `ctx new` refuses any overwrite without `--force`, writes nothing on conflict.
 - Generated templates leave `TODO:` markers for facts not safely inferable.
 - `.context/` follows guides-vs-active split (see `.context/README.md`): durable guides at root, dated ephemeral design docs in `active/`. No `roadmap-notes.md`.

@@ -16,7 +16,7 @@ Toolchain: Node 26 + pnpm 12, pinned in `mise.toml`. Run `mise install` once.
 | `mise run build` | `tsc` to `dist/`. Run before claiming production-ready. `pnpm run build`. |
 | `mise run start` | `node dist/index.js`. `pnpm run start`. |
 | `mise run test` | Vitest fast suite (state precise scope). `pnpm run test`. |
-| `mise run db:generate` | `drizzle-kit generate` — produces migration SQL from `schema.ts`. `pnpm run db:generate`. |
+| `mise run db:generate` | `drizzle-kit generate` - produces migration SQL from `schema.ts`. `pnpm run db:generate`. |
 | `mise run db:migrate` | Apply migrations against `DATABASE_URL`. `pnpm run db:migrate`. |
 
 State command scope exactly. Do not say "all tests pass" unless the script you ran covers every suite.
@@ -25,20 +25,20 @@ State command scope exactly. Do not say "all tests pass" unless the script you r
 
 - `strict: true`. No implicit `any`. `noUncheckedIndexedAccess` recommended.
 - ESM-first (`"type": "module"`). Use `.ts` on relative imports when tsc rewrites them; alternatively configure Node subpath imports (`"imports": { "#src/*": "./src/*.ts" }`) for extension-free internal paths.
-- Validate **everything** entering from outside the process — HTTP bodies, queue messages, provider responses, env vars — with Zod before use.
+- Validate **everything** entering from outside the process - HTTP bodies, queue messages, provider responses, env vars - with Zod before use.
 - Avoid `any`. If unavoidable, isolate it at one SDK call site and comment.
 
 ## Hono Patterns
 
 - Define request and response schemas with Zod. Use `@hono/zod-validator` (or `zod-openapi`) so validation and OpenAPI generation share one source.
-- Handlers are thin: validate → call service → return typed response.
+- Handlers are thin: validate -> call service -> return typed response.
 - Errors map to safe HTTP responses via a centralized error middleware. Never leak provider errors or stack traces.
 - Logger is attached to the request context; downstream services log with that child logger.
 
 ## Database (Drizzle + Postgres)
 
-- `src/db/schema.ts` is the only source of truth for tables. Run `<pkg> run db:generate` after every change; commit both the schema edit and the generated SQL.
-- Services own queries. Compose them with Drizzle's query builder — do not write services that hand back raw `db` references.
+- `src/db/schema.ts` is the only source of truth for tables. Run `mise run db:generate` after every change; commit both the schema edit and the generated SQL.
+- Services own queries. Compose them with Drizzle's query builder - do not write services that hand back raw `db` references.
 - Use parameter binding for values; allow-list identifiers (table/column names) if any are user-controlled.
 - Transactions live inside service methods, not route handlers.
 - Connection lifecycle: one pool created in `src/db/client.ts`, imported by services. Do not open ad-hoc connections.
@@ -49,7 +49,7 @@ If this service runs async jobs, keep these rules. Otherwise delete this section
 
 - Worker payloads are Zod-validated on consume. Treat them as untrusted input even though you produced them.
 - Worker has its own entry (`src/workers/<name>.ts`) and its own log scope.
-- Queue transports state; database persists results. Neither owns business logic — services do.
+- Queue transports state; database persists results. Neither owns business logic - services do.
 - Idempotency: design jobs so duplicate delivery is safe (dedupe key, conditional write).
 - Terminal outcomes: success and failure both clear in-flight state; never leave a job "stuck."
 
@@ -62,7 +62,7 @@ If this service runs async jobs, keep these rules. Otherwise delete this section
 ## Testing
 
 - Vitest under `src/__tests__/` or `src/**/__tests__/`.
-- API: instantiate `createApp()` and call `app.request(...)` — do not boot a real listener.
+- API: instantiate `createApp()` and call `app.request(...)` - do not boot a real listener.
 - DB: PGlite for in-process Postgres in tests. Migrate on setup, truncate between tests.
 - Mock at the boundary (HTTP / queue / provider SDK), not inside service methods. If you find yourself mocking a service, restructure for dependency injection.
 - Reset env vars, singletons, and mocks in `afterEach`.
@@ -72,7 +72,7 @@ If this service runs async jobs, keep these rules. Otherwise delete this section
 - Route handlers do not import from `src/db/`. They go through services.
 - Services do not parse env vars or read process.env. They take typed config in via constructor or factory.
 - Workers do not call routes. They share services with the API.
-- `src/lib/` holds pure helpers — no I/O, no provider SDKs.
+- `src/lib/` holds pure helpers - no I/O, no provider SDKs.
 
 ## Search Scope
 
@@ -95,7 +95,7 @@ Metadata reads inside excluded dirs are fine when the file itself is the source 
 
 ## Settings
 
-`src/config.ts` is the only place `process.env` is read. It exports a Zod-parsed `Config` constructed once at startup. Route handlers, services, workers, and the DB client take the typed value in — they never reach for `process.env` themselves.
+`src/config.ts` is the only place `process.env` is read. It exports a Zod-parsed `Config` constructed once at startup. Route handlers, services, workers, and the DB client take the typed value in - they never reach for `process.env` themselves.
 
 ```ts
 import { z } from "zod";
@@ -114,7 +114,7 @@ Rules:
 
 - One `loadConfig()` call per process, in `src/index.ts` (or the app factory). Pass `Config` (or specific fields) explicitly downstream.
 - **Never** `process.env.X` outside `src/config.ts`. Lint rule recommended.
-- Tests build a `Config` literal directly — they do not mutate `process.env` globally.
+- Tests build a `Config` literal directly - they do not mutate `process.env` globally.
 - New env vars: extend the Zod schema, update `.env.example`, regenerate types if any consumer relies on them.
 
 ## Safety: Do Not Read
@@ -129,12 +129,12 @@ Rules:
 
 Metadata reads are fine: `package.json`, `tsconfig*.json`, lock files, public config files (`drizzle.config.ts`, `vitest.config.ts`, `biome.json`, etc.).
 
-Use `.env.example` only for variable names. Preserve unrelated dirty work — never revert files you did not intentionally change.
+Use `.env.example` only for variable names. Preserve unrelated dirty work - never revert files you did not intentionally change.
 
 ## Commits
 
 - **One concern per commit.** Do not bundle a refactor with a feature with a dep bump.
-- **Subject ≤ 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
+- **Subject <= 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
 - **Body explains *why*, not *what*.** The diff shows what.
 - **Generated artifacts ride with their source change.** Drizzle migration SQL commits with the `schema.ts` edit that produced it. Lockfile updates commit with the `package.json` change that triggered them.
 - **Never commit secrets.** Real tokens, DSNs, bearer headers, cloud credentials. `.env.example` is for variable names only.
@@ -153,7 +153,7 @@ NOTES.md
 SCRATCH.md
 ```
 
-- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch — do not add it to `.gitignore`.
+- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch - do not add it to `.gitignore`.
 - Durable architecture, decisions, and short-lived focus notes belong in `.context/` (committed). Scratch belongs at root (ignored).
 - A plan worth keeping graduates into a dated design doc under `.context/active/` (see `.context/README.md`) or into the PR description before the scratch file is discarded. Do not park it in a root scratch file.
 

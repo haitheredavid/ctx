@@ -4,10 +4,10 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 
 ## Project Context
 
-- [.context/project-context.md](.context/project-context.md) — what this app is, architecture, ownership map, integrations, durable decisions.
-- [.context/engineering-guide.md](.context/engineering-guide.md) — commands, TypeScript standards, framework patterns, safety.
-- [.context/writing-tdds.md](.context/writing-tdds.md) — how to write a Technical Design Document for this repo.
-- [.context/README.md](.context/README.md) — `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
+- [.context/project-context.md](.context/project-context.md) - what this app is, architecture, ownership map, integrations, durable decisions.
+- [.context/engineering-guide.md](.context/engineering-guide.md) - commands, TypeScript standards, framework patterns, safety.
+- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document for this repo.
+- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
 
 ## Stack
 
@@ -19,14 +19,14 @@ Toolchain: Node 26 + pnpm 12, pinned in `mise.toml`. Run `mise install` once.
 
 ```
 mise run install           # pnpm install
-mise run dev               # pnpm run dev — concurrent vite + tsx watch on server
-mise run typecheck         # pnpm run typecheck — tsc --noEmit across client/server/shared
-mise run lint              # pnpm run lint — Biome or ESLint
-mise run build             # pnpm run build — build client (dist/client) and server (dist/server)
-mise run start             # pnpm run start — node dist/server/index.js (serves API + static client)
-mise run test              # pnpm run test — Vitest
-mise run db:generate       # pnpm run db:generate — drizzle-kit generate (if using Drizzle)
-mise run db:migrate        # pnpm run db:migrate — apply migrations
+mise run dev               # pnpm run dev - concurrent vite + tsx watch on server
+mise run typecheck         # pnpm run typecheck - tsc --noEmit across client/server/shared
+mise run lint              # pnpm run lint - Biome or ESLint
+mise run build             # pnpm run build - build client (dist/client) and server (dist/server)
+mise run start             # pnpm run start - node dist/server/index.js (serves API + static client)
+mise run test              # pnpm run test - Vitest
+mise run db:generate       # pnpm run db:generate - drizzle-kit generate (if using Drizzle)
+mise run db:migrate        # pnpm run db:migrate - apply migrations
 mise run check             # typecheck + lint + test
 ```
 
@@ -48,11 +48,11 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 
 ## MCP Servers
 
-- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`).
 
 ## Skills
 
-- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`).
 
 ## Where To Edit
 

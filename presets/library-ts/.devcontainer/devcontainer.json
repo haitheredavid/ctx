@@ -5,7 +5,7 @@
   "postCreateCommand": "mise trust && mise install",
   "customizations": {
     "vscode": {
-      "extensions": ["hverlin.mise-vscode", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+      "extensions": ["hverlin.mise-vscode", "dbaeumer.vscode-eslint", "biomejs.biome"]
     }
   },
   "remoteUser": "vscode"

@@ -4,14 +4,14 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 
 ## Project Context
 
-- [.context/project-context.md](.context/project-context.md) — what this library is, public surface, ownership map, integrations, durable decisions.
-- [.context/engineering-guide.md](.context/engineering-guide.md) — commands, TypeScript standards, build, tests, release flow, safety.
-- [.context/writing-tdds.md](.context/writing-tdds.md) — how to write a Technical Design Document for this repo.
-- [.context/README.md](.context/README.md) — `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
+- [.context/project-context.md](.context/project-context.md) - what this library is, public surface, ownership map, integrations, durable decisions.
+- [.context/engineering-guide.md](.context/engineering-guide.md) - commands, TypeScript standards, build, tests, release flow, safety.
+- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document for this repo.
+- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
 
 ## Stack
 
-Published TypeScript library. `tsc` only build, no bundler. ESM, `"type": "module"`. Runtime-neutral: no `node:*` imports in `src/` by default — consumers run it in Node, the browser, Bun, Deno, or workers. Vitest for tests. Changesets for versioning and publishing. Optional CLI surface via `bin` (delete that section if not a CLI).
+Published TypeScript library. `tsc` only build, no bundler. ESM, `"type": "module"`. Runtime-neutral: no `node:*` imports in `src/` by default - consumers run it in Node, the browser, Bun, Deno, or workers. Vitest for tests. Changesets for versioning and publishing. Optional CLI surface via `bin` (delete that section if not a CLI).
 
 ## Commands
 
@@ -21,7 +21,7 @@ Toolchain: Node 26 + pnpm 12, pinned in `mise.toml`. Run `mise install` once.
 mise run install       # pnpm install
 mise run typecheck     # tsc --noEmit
 mise run lint          # Biome or ESLint
-mise run build         # tsc -p tsconfig.build.json → dist/
+mise run build         # tsc -p tsconfig.build.json -> dist/
 mise run test          # Vitest
 mise run changeset     # record an upcoming user-facing change
 mise run version       # changeset version (bumps + CHANGELOG)
@@ -34,11 +34,11 @@ Cite exact script scope. Do not claim a command runs every test unless `package.
 ## Standards
 
 - Strict TypeScript, ESM-first. `"type": "module"`.
-- **Public surface** lives in `src/index.ts`. Anything not re-exported there is private — deep imports are not part of the contract.
+- **Public surface** lives in `src/index.ts`. Anything not re-exported there is private - deep imports are not part of the contract.
 - `package.json` ships an `"exports"` map (single entry by default) plus `"types"` pointing at `dist/index.d.ts`, and `"sideEffects": false` so consumers can tree-shake.
-- No `node:*` imports in `src/` (CLI file exempt — see `.context/engineering-guide.md`). Prefer standard ECMAScript APIs. Use `globalThis`, not `window` or `global`.
+- No `node:*` imports in `src/` (CLI file exempt - see `.context/engineering-guide.md`). Prefer standard ECMAScript APIs. Use `globalThis`, not `window` or `global`.
 - No `process.env`, `process.cwd`, or filesystem reads in library code. Configuration is taken as a function argument or constructor option. The host owns env.
-- No logger. Throw on error, return on success — the consuming app owns logging.
+- No logger. Throw on error, return on success - the consuming app owns logging.
 - Public API is fully typed: `.d.ts` shipped from `dist/`. No `any` except at one isolated SDK boundary with a comment.
 
 ## Safety
@@ -49,17 +49,17 @@ Search scope, "no settings" rule, and commit/changeset style live in [`.context/
 
 ## MCP Servers
 
-- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`).
 
 ## Skills
 
-- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`).
 
 ## Where To Edit
 
 | File | Owns |
 |---|---|
-| `src/index.ts` | Public surface. Only re-exports — no inline implementation. |
+| `src/index.ts` | Public surface. Only re-exports - no inline implementation. |
 | `src/*.ts` | Internal modules. Importable here but not part of the contract. |
 | `src/__tests__/` | Vitest unit tests. Mirror source layout. |
 | `src/cli.ts` | (Optional) CLI entry. Only file allowed to import `node:*`. |

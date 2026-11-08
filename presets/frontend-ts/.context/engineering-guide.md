@@ -17,12 +17,12 @@ Toolchain: Node 26 + pnpm 12, pinned in `mise.toml`. Run `mise install` once.
 | `mise run test` | Vitest. State scope precisely (unit / component / e2e). (`pnpm run test`) |
 | `mise run check` | typecheck + lint + test. |
 
-State command scope exactly. Do not say "all tests pass" unless the script you ran covers every suite — check `package.json` first.
+State command scope exactly. Do not say "all tests pass" unless the script you ran covers every suite - check `package.json` first.
 
 ## TypeScript
 
 - `strict: true`. No implicit `any`. `noUncheckedIndexedAccess` recommended.
-- Path alias `@/*` → `src/client/*` (or your chosen root).
+- Path alias `@/*` -> `src/client/*` (or your chosen root).
 - Module resolution: `Bundler` (Vite-friendly).
 - Validate unknown external input at the network boundary with Zod, then trust the typed value internally.
 - Avoid `any`. If unavoidable, isolate it at one SDK/transport call site and comment why.
@@ -31,7 +31,7 @@ State command scope exactly. Do not say "all tests pass" unless the script you r
 
 - Components small and single-purpose. Co-locate component-only helpers.
 - Controlled forms via `react-hook-form` with Zod resolver. No uncontrolled inputs in production code.
-- Async surfaces render four states explicitly: **idle, loading, success, error**. Render useful empty/error states — do not silently swallow failures.
+- Async surfaces render four states explicitly: **idle, loading, success, error**. Render useful empty/error states - do not silently swallow failures.
 - Effects should not own data ownership. Prefer derived state and explicit fetch hooks.
 - Suspense + ErrorBoundary at route or feature root, not per-component.
 
@@ -54,7 +54,7 @@ Whichever choice: forms own their own state (react-hook-form), routing owns navi
 
 ## Vite
 
-- API requests proxied in dev: `/api` → backend port (configure in `vite.config.ts`).
+- API requests proxied in dev: `/api` -> backend port (configure in `vite.config.ts`).
 - Env: only `VITE_*`-prefixed vars are exposed to the bundle. Never put secrets behind that prefix.
 - Build output `dist/` is the single deploy artifact.
 
@@ -64,12 +64,12 @@ Whichever choice: forms own their own state (react-hook-form), routing owns navi
 - Playwright for end-to-end if needed.
 - Reset module-level state (singletons, stores) in `afterEach`.
 - Mock the network at the boundary (MSW or fetch stub), not at component prop level.
-- Run `<pkg> run typecheck` and `<pkg> run build` before claiming a change is ready.
+- Run `mise run typecheck` and `mise run build` before claiming a change is ready.
 
 ## Boundaries
 
 - `src/client/` (browser) never imports from `src/server/` (if it exists). Cross-boundary types live in `src/shared/`.
-- API client is a thin module — no business logic, just request shaping and response parsing.
+- API client is a thin module - no business logic, just request shaping and response parsing.
 - Stores do not call `fetch` directly; they go through the API client.
 
 ## Search Scope
@@ -94,7 +94,7 @@ Metadata reads inside excluded dirs are fine when the file itself is the source 
 
 ## Settings
 
-`src/env.ts` is the only module that touches `import.meta.env`. It validates the Vite-exposed `VITE_*` vars with Zod and exports a typed `env` object. Components, hooks, and the API client import `env` — they never read `import.meta.env` directly.
+`src/env.ts` is the only module that touches `import.meta.env`. It validates the Vite-exposed `VITE_*` vars with Zod and exports a typed `env` object. Components, hooks, and the API client import `env` - they never read `import.meta.env` directly.
 
 ```ts
 import { z } from "zod";
@@ -109,7 +109,7 @@ export const env = Env.parse(import.meta.env);
 export type Env = typeof env;
 ```
 
-`VITE_API_BASE_URL` is optional — same-origin deploys leave it unset and let the client call `/api/...` relative paths. `MODE` is a free string because Vite supports custom modes via `vite --mode <name>`.
+`VITE_API_BASE_URL` is optional - same-origin deploys leave it unset and let the client call `/api/...` relative paths. `MODE` is a free string because Vite supports custom modes via `vite --mode <name>`.
 
 Rules:
 
@@ -130,12 +130,12 @@ Rules:
 
 Metadata reads are fine: `package.json`, `tsconfig*.json`, lock files, public config files (`vite.config.ts`, `tailwind.config.ts`, `eslint.config.*`, `vitest.config.*`, etc.).
 
-Use `.env.example` only for variable names. Preserve unrelated dirty work — never revert files you did not intentionally change.
+Use `.env.example` only for variable names. Preserve unrelated dirty work - never revert files you did not intentionally change.
 
 ## Commits
 
 - **One concern per commit.** Do not bundle a refactor with a feature with a dep bump.
-- **Subject ≤ 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
+- **Subject <= 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
 - **Body explains *why*, not *what*.** The diff shows what.
 - **Lockfile updates commit with the `package.json` change** that triggered them.
 - **Never commit secrets.** Real tokens, DSNs, bearer headers, cloud credentials. `.env.example` is for variable names only.
@@ -154,7 +154,7 @@ NOTES.md
 SCRATCH.md
 ```
 
-- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch — do not add it to `.gitignore`.
+- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch - do not add it to `.gitignore`.
 - Durable architecture, decisions, and short-lived focus notes belong in `.context/` (committed). Scratch belongs at root (ignored).
 - A plan worth keeping graduates into a dated design doc under `.context/active/` (see `.context/README.md`) or into the PR description before the scratch file is discarded. Do not park it in a root scratch file.
 

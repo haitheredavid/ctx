@@ -4,10 +4,10 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 
 ## Project Context
 
-- [.context/project-context.md](.context/project-context.md) — what this app is, architecture, ownership map, integrations, durable decisions.
-- [.context/engineering-guide.md](.context/engineering-guide.md) — commands, TypeScript/React standards, testing, safety.
-- [.context/writing-tdds.md](.context/writing-tdds.md) — how to write a Technical Design Document for this repo.
-- [.context/README.md](.context/README.md) — `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
+- [.context/project-context.md](.context/project-context.md) - what this app is, architecture, ownership map, integrations, durable decisions.
+- [.context/engineering-guide.md](.context/engineering-guide.md) - commands, TypeScript/React standards, testing, safety.
+- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document for this repo.
+- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
 
 ## Stack
 
@@ -33,7 +33,7 @@ Cite exact script scope. Do not claim a command runs every test unless `package.
 ## Standards
 
 - Strict TypeScript. No `any` except at SDK boundaries; isolate and comment.
-- `src/client/` (browser code), `src/shared/` (cross-boundary types). If a backend exists in this repo, it lives in `src/server/` and **`src/client/` must not import from it** — share types via `src/shared/` only.
+- `src/client/` (browser code), `src/shared/` (cross-boundary types). If a backend exists in this repo, it lives in `src/server/` and **`src/client/` must not import from it** - share types via `src/shared/` only.
 - Every async surface renders four states: idle, loading, success, error. Do not hide failed responses.
 - Forms: `react-hook-form` + Zod resolver. Validate on the user-input boundary.
 - Tailwind + CSS variables for theming. shadcn/Radix UI for unstyled primitives.
@@ -47,11 +47,11 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 
 ## MCP Servers
 
-- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`).
 
 ## Skills
 
-- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`).
 
 ## Where To Edit
 

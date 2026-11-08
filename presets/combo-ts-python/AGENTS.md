@@ -4,10 +4,10 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 
 ## Project Context
 
-- [.context/project-context.md](.context/project-context.md) — what this app is, architecture, ownership map, integrations, durable decisions.
-- [.context/engineering-guide.md](.context/engineering-guide.md) — commands, language standards, cross-language contract rules, safety.
-- [.context/writing-tdds.md](.context/writing-tdds.md) — how to write a Technical Design Document for this repo.
-- [.context/README.md](.context/README.md) — `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
+- [.context/project-context.md](.context/project-context.md) - what this app is, architecture, ownership map, integrations, durable decisions.
+- [.context/engineering-guide.md](.context/engineering-guide.md) - commands, language standards, cross-language contract rules, safety.
+- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document for this repo.
+- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
 
 ## Stack
 
@@ -39,10 +39,10 @@ Cite exact script scope. Do not claim a command runs every test unless the relev
 
 ## Standards
 
-- API is the contract authority. FastAPI `pydantic.BaseModel` request/response models → `openapi.json` → generated TS types in `web/src/api-client/`. Web never edits the generated file by hand.
+- API is the contract authority. FastAPI `pydantic.BaseModel` request/response models -> `openapi.json` -> generated TS types in `web/src/api-client/`. Web never edits the generated file by hand.
 - Strict TypeScript in `web/`. Same `frontend-ts` rules: idle/loading/success/error on every async surface, controlled forms, no backend secrets in the bundle.
 - Strict Python in `api/`. Same `python` rules: `Settings(BaseSettings)` is the only env path, `@dataclass` internal, `BaseModel` at boundaries.
-- Dev: Vite proxies `/api` to the FastAPI port. In production: choose between same-origin (FastAPI serves the built bundle) or split-origin (web on CDN, API behind a separate host) — document in `.context/project-context.md`.
+- Dev: Vite proxies `/api` to the FastAPI port. In production: choose between same-origin (FastAPI serves the built bundle) or split-origin (web on CDN, API behind a separate host) - document in `.context/project-context.md`.
 
 ## Safety
 
@@ -52,11 +52,11 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 
 ## MCP Servers
 
-- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`).
 
 ## Skills
 
-- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`).
 
 ## Where To Edit
 
@@ -64,7 +64,7 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 |---|---|
 | `web/src/` | React app, UI state, typed API client. |
 | `mise.toml` | Toolchain pins and task entrypoints. Commands in this file map 1:1 to its tasks. |
-| `web/src/api-client/types.ts` | **Generated.** Do not hand-edit. Re-run `<pkg> run gen:api`. |
+| `web/src/api-client/types.ts` | **Generated.** Do not hand-edit. Re-run `mise run web:gen-api`. |
 | `web/src/api-client/index.ts` | Hand-written wrapper around `fetch` that uses generated types. |
 | `api/src/<pkg>/` | FastAPI routes, services, models, settings. |
 | `api/src/<pkg>/main.py` | App factory + composition root. |

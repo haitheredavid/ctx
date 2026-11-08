@@ -1,5 +1,5 @@
-import { access, readdir, readFile, stat } from "node:fs/promises";
-import { basename, join, relative } from "node:path";
+import { access, readdir, readFile, realpath, stat } from "node:fs/promises";
+import { isAbsolute, join, relative } from "node:path";
 
 export type PackageJson = {
   name?: string;
@@ -53,11 +53,11 @@ export async function detectMise(target: string): Promise<MiseInfo | null> {
     const tasks: MiseInfo["tasks"] = [];
     for (const [name, value] of Object.entries(rawTasks)) {
       if (typeof value === "string") {
-        tasks.push({ name, summary: value });
+        tasks.push({ name, summary: `see ${file}` });
         continue;
       }
       if (!isTable(value) || value.hide === true) continue;
-      tasks.push({ name, summary: summarizeTask(value) });
+      tasks.push({ name, summary: summarizeTask(value, file) });
     }
     tasks.sort((a, b) => a.name.localeCompare(b.name));
     return { file, tools, tasks };
@@ -72,12 +72,10 @@ function formatToolVersion(value: unknown): string {
   return JSON.stringify(value);
 }
 
-function summarizeTask(task: Record<string, unknown>): string {
+function summarizeTask(task: Record<string, unknown>, file: string): string {
   if (typeof task.description === "string") return task.description;
-  if (typeof task.run === "string") return task.run;
-  if (Array.isArray(task.run)) return task.run.join(" && ");
   if (Array.isArray(task.depends)) return `runs ${task.depends.join(", ")}`;
-  return "see mise.toml";
+  return `see ${file}`;
 }
 
 function isTable(value: unknown): value is Record<string, unknown> {
@@ -106,8 +104,20 @@ const SKILL_ROOTS = [".claude/skills", ".agents/skills"];
 export async function detectMcp(target: string): Promise<McpServer[]> {
   const servers: McpServer[] = [];
   for (const source of MCP_SOURCES) {
-    const path = join(target, source.file);
-    const parsed = source.format === "json" ? await readJson<Record<string, unknown>>(path) : await readToml(path);
+    let text: string;
+    try {
+      text = await readFile(join(target, source.file), "utf8");
+    } catch (error) {
+      if (isNotFound(error)) continue;
+      throw error;
+    }
+    let parsed: unknown;
+    try {
+      parsed = source.format === "json" ? Bun.JSONC.parse(text) : Bun.TOML.parse(text);
+    } catch {
+      // Parser messages can echo file contents (tokens), so never include them.
+      throw new Error(`Failed to parse MCP config ${source.file}`);
+    }
     const entries = isTable(parsed) ? parsed[source.key] : undefined;
     if (!isTable(entries)) continue;
     for (const [name, entry] of Object.entries(entries)) {
@@ -119,7 +129,7 @@ export async function detectMcp(target: string): Promise<McpServer[]> {
 
 function classifyMcpServer(entry: unknown): Pick<McpServer, "transport" | "command"> {
   if (!isTable(entry)) return { transport: "unknown" };
-  if (typeof entry.command === "string") return { transport: "stdio", command: basename(entry.command) };
+  if (typeof entry.command === "string") return { transport: "stdio", command: commandName(entry.command) };
   if (entry.type === "sse") return { transport: "sse" };
   const isHttp =
     entry.type === "http" ||
@@ -128,6 +138,12 @@ function classifyMcpServer(entry: unknown): Pick<McpServer, "transport" | "comma
     typeof entry.httpUrl === "string" ||
     typeof entry.serverUrl === "string";
   return { transport: isHttp ? "http" : "unknown" };
+}
+
+function commandName(command: string): string | undefined {
+  const first = command.trim().split(/\s+/)[0] ?? "";
+  const name = first.split(/[/\\]/).pop() ?? "";
+  return /^[\w.+@-]+$/.test(name) ? name : undefined;
 }
 
 export async function detectSkills(target: string): Promise<Skill[]> {
@@ -156,26 +172,30 @@ function summarizeDescription(value: string | undefined): string {
   return collapsed.length > 120 ? `${collapsed.slice(0, 117)}...` : collapsed;
 }
 
-// Minimal YAML frontmatter reader: flat `key: value` pairs plus indented block/folded continuations.
-function parseFrontmatter(text: string): Record<string, string> {
+// Minimal YAML frontmatter reader: flat `key: value` pairs plus indented block/folded/plain continuations.
+function parseFrontmatter(raw: string): Record<string, string> {
+  const text = raw.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
   if (!text.startsWith("---\n")) return {};
   const lines = text.slice(4).split("\n");
   const end = lines.indexOf("---");
-  const body = end === -1 ? lines : lines.slice(0, end);
+  if (end === -1) return {};
+  const body = lines.slice(0, end);
   const result: Record<string, string> = {};
   for (let i = 0; i < body.length; i++) {
     const match = /^([A-Za-z_][\w-]*):\s*(.*)$/.exec(body[i] as string);
     if (!match) continue;
     const key = match[1] as string;
     let value = (match[2] as string).trim();
-    if (["", ">", "|", ">-", "|-"].includes(value)) {
-      const parts: string[] = [];
-      while (i + 1 < body.length && /^\s/.test(body[i + 1] as string)) {
-        i++;
-        parts.push((body[i] as string).trim());
-      }
-      value = parts.join(" ");
+    const isBlock = ["", ">", "|", ">-", "|-"].includes(value);
+    const parts: string[] = isBlock ? [] : [value];
+    for (;;) {
+      let j = i + 1;
+      if (isBlock) while (j < body.length && (body[j] as string).trim() === "") j++;
+      if (!/^\s+\S/.test(body[j] ?? "")) break;
+      i = j;
+      parts.push((body[i] as string).trim());
     }
+    value = parts.join(" ");
     const quoted = /^(["'])(.*)\1$/.exec(value);
     result[key] = quoted ? (quoted[2] as string) : value;
   }
@@ -262,10 +282,15 @@ export async function detectWorkspaces(target: string, rootPackage: PackageJson)
 }
 
 export async function expandWorkspacePattern(target: string, pattern: string): Promise<string[]> {
+  const realTarget = await realpath(target);
+  const insideTarget = async (dir: string) => {
+    const rel = relative(realTarget, await realpath(dir));
+    return !(rel === ".." || rel.startsWith("../") || rel.startsWith("..\\") || isAbsolute(rel));
+  };
   const normalized = pattern.replace(/\\/g, "/");
   if (!normalized.includes("*")) {
     const dir = join(target, normalized);
-    return (await isDirectory(dir)) ? [dir] : [];
+    return (await isDirectory(dir)) && (await insideTarget(dir)) ? [dir] : [];
   }
 
   const starIndex = normalized.indexOf("*");
@@ -279,7 +304,7 @@ export async function expandWorkspacePattern(target: string, pattern: string): P
   for (const entry of entries) {
     if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
     const candidate = suffix ? join(baseDir, entry.name, suffix) : join(baseDir, entry.name);
-    if (await isDirectory(candidate)) dirs.push(candidate);
+    if ((await isDirectory(candidate)) && (await insideTarget(candidate))) dirs.push(candidate);
   }
   return dirs;
 }

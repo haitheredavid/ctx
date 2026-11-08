@@ -77,7 +77,7 @@ All CLI args + env vars flow through single typed parser, no scattered `process.
 ## Safety
 
 - Never read `.env`, `.secrets`, local params, copied certs, bearer headers, database URLs, DSNs, AWS secrets, local credential values.
-- Metadata reads allowed: `package.json`, `tsconfig*.json`, known config filenames, workspace package manifests.
+- Metadata reads allowed: `package.json`, `tsconfig*.json`, known config filenames, workspace package manifests, `mise.toml`, MCP configs (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`), `SKILL.md` frontmatter. Output carries only MCP server name, transport, sanitized command name; never args/env/headers/URL text, script bodies, or mise `run` text.
 - Dry-run stays default.
 - Writes skip existing files unless `--force` explicit.
 

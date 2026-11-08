@@ -1,7 +1,9 @@
-import { copyFile, mkdir, readdir, readFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { copyFile, mkdir, readdir, readFile, rm } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
-import { exists } from "./detect.ts";
+import { isDirectory } from "./detect.ts";
 import { PRESETS_DIR } from "./paths.ts";
+import { assertSafeWritePath, entryExists } from "./safe-fs.ts";
 
 export type Preset = { name: string; description: string; dir: string };
 
@@ -40,20 +42,36 @@ export async function applyPreset(opts: { preset: string; target: string; force:
   const preset = await findPreset(opts.preset);
   const relPaths = await presetFiles(preset);
 
+  if ((await entryExists(opts.target)) && !(await isDirectory(opts.target))) {
+    throw new Error(`${opts.target} is not a directory`);
+  }
+  for (const rel of relPaths) await assertSafeWritePath(opts.target, join(opts.target, rel));
+
   if (!opts.force) {
     const conflicts: string[] = [];
     for (const rel of relPaths) {
-      if (await exists(join(opts.target, rel))) conflicts.push(rel);
+      if (await entryExists(join(opts.target, rel))) conflicts.push(rel);
     }
     if (conflicts.length > 0) {
       throw new Error(`refusing to overwrite existing files (use --force):\n  ${conflicts.join("\n  ")}`);
     }
   }
 
-  for (const rel of relPaths) {
-    const dest = join(opts.target, rel);
-    await mkdir(dirname(dest), { recursive: true });
-    await copyFile(join(preset.dir, rel), dest);
+  const createdFiles: string[] = [];
+  const createdDirs: string[] = [];
+  try {
+    for (const rel of relPaths) {
+      const dest = join(opts.target, rel);
+      const firstCreated = await mkdir(dirname(dest), { recursive: true });
+      if (firstCreated !== undefined) createdDirs.push(firstCreated);
+      const existed = opts.force && (await entryExists(dest));
+      await copyFile(join(preset.dir, rel), dest, opts.force ? 0 : constants.COPYFILE_EXCL);
+      if (!existed) createdFiles.push(dest);
+    }
+  } catch (error) {
+    for (const file of createdFiles) await rm(file, { force: true });
+    for (const dir of createdDirs.reverse()) await rm(dir, { recursive: true, force: true });
+    throw error;
   }
   return relPaths;
 }

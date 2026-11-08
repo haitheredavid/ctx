@@ -6,8 +6,6 @@ Operational standards for working in this Python library. Read before changing c
 
 Toolchain: Python 3.14 + uv, pinned in `mise.toml`. Run `mise install` once.
 
-Build backend: `hatchling`. Also set `requires-python` in `pyproject.toml`.
-
 | Command | Scope |
 |---|---|
 | `mise run install` | Install/update from `uv.lock`. Creates `.venv/` if missing. (`uv sync`) |
@@ -33,8 +31,8 @@ State command scope exactly. Do not say "tests pass" if `-k` filtered out covera
 - `ty check` strict. No implicit `Any`. Annotate generics fully (`list[int]`, not `list`).
 - Prefer composition over inheritance. Inheritance is for type substitutability, not code reuse.
 - No mutable default arguments. No mutable module-level state (constants are fine if truly immutable).
-- Imports: stdlib, third-party, first-party — three groups, each sorted. `ruff` enforces.
-- No `print()` in library code. No `logging.basicConfig()`. Modules use `logger = logging.getLogger(__name__)` and emit records — the host configures handlers and levels.
+- Imports: stdlib, third-party, first-party - three groups, each sorted. `ruff` enforces.
+- No `print()` in library code. No `logging.basicConfig()`. Modules use `logger = logging.getLogger(__name__)` and emit records - the host configures handlers and levels.
 - No I/O at import time. Module top-level is type definitions, function definitions, and pure constants. Any work runs in functions the consumer calls.
 
 ## Public API & Typing
@@ -55,12 +53,14 @@ __all__ = [
 
 - Submodules prefixed with `_` (`_client.py`, `_errors.py`) are private. Consumers who reach for them are on their own.
 - `src/<pkg>/py.typed` is an empty marker file. Hatch includes it in the wheel (see Build below). Without it, `mypy`/`ty` consumers will ignore your type information.
-- Breaking the public surface — removing a name, renaming, changing a signature, narrowing a return type — requires a `major` version bump and a `### Removed` / `### Changed` entry in `CHANGELOG.md`.
-- Additive changes — new exports, new optional params with defaults, widened return types — require a `minor` bump and `### Added`.
+- Breaking the public surface - removing a name, renaming, changing a signature, narrowing a return type - requires a `major` version bump and a `### Removed` / `### Changed` entry in `CHANGELOG.md`.
+- Additive changes - new exports, new optional params with defaults, widened return types - require a `minor` bump and `### Added`.
 - Bugfixes and internal refactors that leave the contract intact require a `patch` bump and `### Fixed`.
 - Deprecations use `warnings.warn(..., DeprecationWarning, stacklevel=2)` and ship at least one `minor` release before removal. Record the removal target in `CHANGELOG.md`.
 
 ## Build (Hatchling)
+
+Build backend: `hatchling`. Also set `requires-python` in `pyproject.toml`.
 
 `pyproject.toml` shape:
 
@@ -91,16 +91,16 @@ packages = ["src/<pkg>"]
 # py.typed travels with the package directory, no extra config needed.
 ```
 
-- Version lives in `pyproject.toml` only. Do not duplicate it in `__init__.py` — read it with `importlib.metadata.version("<pkg>")` if a consumer needs it.
+- Version lives in `pyproject.toml` only. Do not duplicate it in `__init__.py` - read it with `importlib.metadata.version("<pkg>")` if a consumer needs it.
 - Confirm the built wheel includes `py.typed`: `uv run python -m zipfile -l dist/<pkg>-X.Y.Z-py3-none-any.whl | grep py.typed`. Missing marker is a packaging bug.
 - Confirm the sdist contains only what is needed: `tar tzf dist/<pkg>-X.Y.Z.tar.gz`. Anything else leaking in (`.venv/`, `tests/` if not desired, secrets) is a packaging bug.
 
 ## Tests
 
 - Pytest under `tests/`, mirroring `src/<pkg>/` paths.
-- Fixtures in `conftest.py`. No global state — every fixture is explicit per-test.
-- `tmp_path` for filesystem. **No `monkeypatch.setenv` in library tests** — libraries do not read env, so tests should not need to set it. If a test wants it, you have built env-reading into a layer that should take options instead.
-- **Do not `unittest.mock.patch` first-party modules.** If a test feels like it needs that, the code under test is missing a seam — pass the dependency in instead.
+- Fixtures in `conftest.py`. No global state - every fixture is explicit per-test.
+- `tmp_path` for filesystem. **No `monkeypatch.setenv` in library tests** - libraries do not read env, so tests should not need to set it. If a test wants it, you have built env-reading into a layer that should take options instead.
+- **Do not `unittest.mock.patch` first-party modules.** If a test feels like it needs that, the code under test is missing a seam - pass the dependency in instead.
 - Third-party SDKs may be patched at their import site, but prefer a thin adapter you can replace with a fake.
 - Reset module-level singletons (if any) in fixture teardown. Better: do not have module-level singletons.
 
@@ -109,9 +109,9 @@ packages = ["src/<pkg>"]
 Delete this section if `[project.scripts]` is not set.
 
 - `src/<pkg>/cli.py` is the entry. `[project.scripts] <bin-name> = "<pkg>.cli:main"` wires it.
-- The CLI is a thin wrapper: parse argv → call into the library → print result → set exit code. No business logic in the CLI itself.
+- The CLI is a thin wrapper: parse argv -> call into the library -> print result -> set exit code. No business logic in the CLI itself.
 - Argv parsing: TODO (`argparse` stdlib / `click` / `typer`). `argparse` is zero-dep and the default; `typer`/`click` are nicer for subcommands.
-- `cli.py` is the only module that calls `sys.exit`. Internal functions return values or raise — they never exit.
+- `cli.py` is the only module that calls `sys.exit`. Internal functions return values or raise - they never exit.
 - Exit codes: `0` success; non-zero on error. Document each non-zero code in `README.md`.
 - Streams: results to **stdout**, diagnostics and errors to **stderr**. Use `print(..., file=sys.stderr)` or a stderr logger handler set up at CLI startup only.
 - Tests: invoke the underlying library functions directly. Reserve subprocess tests for argv parsing and exit-code wiring.
@@ -133,7 +133,7 @@ Workflow per release:
 Rules:
 
 - Pre-1.0 (`0.x.y`): minor = breaking. Treat minor bumps as the breaking-change channel until you cut 1.0.
-- Yanking is forbidden — release a patch that fixes or reverts instead. (PyPI's "yank" is for emergency only.)
+- Yanking is forbidden - release a patch that fixes or reverts instead. (PyPI's "yank" is for emergency only.)
 - A release never edits code beyond the version bump and CHANGELOG header reshuffle. Everything else lands in normal PRs.
 
 ## Search Scope
@@ -175,7 +175,7 @@ def create_client(options: ClientOptions) -> Client: ...
 
 Rules:
 
-- No `os.environ.get(...)` in `src/<pkg>/`. CLI (`src/<pkg>/cli.py`) is the documented exception — but it parses env once, hands typed values to the library, and never lets ambient env reach internal modules.
+- No `os.environ.get(...)` in `src/<pkg>/`. CLI (`src/<pkg>/cli.py`) is the documented exception - but it parses env once, hands typed values to the library, and never lets ambient env reach internal modules.
 - Tests construct option objects directly. They do not `monkeypatch.setenv`.
 - Document defaults at the call site (in the option type's docstring and in `README.md`), not via runtime env lookups.
 
@@ -192,12 +192,12 @@ Rules:
 
 Metadata reads are fine: `pyproject.toml`, `uv.lock`, `pytest.ini`, `tox.ini`, `ruff.toml`, and public config files.
 
-Use `.env.example` only for variable names (rare for libraries). Preserve unrelated dirty work — never revert files you did not intentionally change.
+Use `.env.example` only for variable names (rare for libraries). Preserve unrelated dirty work - never revert files you did not intentionally change.
 
 ## Commits
 
 - **One concern per commit.** Do not bundle a refactor with a feature with a dep bump.
-- **Subject ≤ 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
+- **Subject <= 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
 - **Body explains *why*, not *what*.** The diff shows what.
 - **Every user-facing change updates `## [Unreleased]` in `CHANGELOG.md` in the same commit.** PR review checks for it.
 - **Lockfile updates commit with the source change that triggered them.** `uv.lock` rides with the `pyproject.toml` edit.
@@ -217,7 +217,7 @@ NOTES.md
 SCRATCH.md
 ```
 
-- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch — do not add it to `.gitignore`.
+- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch - do not add it to `.gitignore`.
 - Durable architecture, decisions, and short-lived focus notes belong in `.context/` (committed). Scratch belongs at root (ignored).
 - A plan worth keeping graduates into a dated design doc under `.context/active/` (see `.context/README.md`) or into the PR description before the scratch file is discarded. Do not park it in a root scratch file.
 

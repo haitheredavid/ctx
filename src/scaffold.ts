@@ -21,6 +21,7 @@ import {
 } from "./detect.ts";
 import { TEMPLATES_DIR } from "./paths.ts";
 import { findPreset, type Preset, presetFiles } from "./presets.ts";
+import { assertSafeWritePath, entryExists } from "./safe-fs.ts";
 
 export type ScaffoldOptions = {
   target: string;
@@ -54,7 +55,7 @@ const SECRET_PATHS = [
 
 export async function scaffold(opts: ScaffoldOptions): Promise<ScaffoldResult[]> {
   const target = opts.target;
-  const preset = opts.preset ? await findPreset(opts.preset) : null;
+  const preset = opts.preset !== undefined ? await findPreset(opts.preset) : null;
   const rootPackage = (await readJson<PackageJson>(join(target, "package.json"))) ?? {};
   const tsConfig = await readFirstJson<TsConfig>(target, ["tsconfig.json", "tsconfig.base.json"]);
   const packageManager = await detectPackageManager(target, rootPackage);
@@ -86,10 +87,10 @@ export async function scaffold(opts: ScaffoldOptions): Promise<ScaffoldResult[]>
         path: join(workspace.dir, "AGENTS.md"),
         content: render(overlayTemplate, {
           ...context,
-          packageName: workspace.packageName,
-          packageDir: workspace.relDir,
-          packageDescription: workspace.description,
-          packageCommands: formatCommands(workspace.scripts, packageManager, workspace.relDir),
+          packageName: clean(workspace.packageName),
+          packageDir: clean(workspace.relDir),
+          packageDescription: clean(workspace.description),
+          packageCommands: formatCommands(workspace.scripts, packageManager, clean(workspace.relDir)),
         }),
       });
     }
@@ -156,10 +157,11 @@ function replaceSection(markdown: string, heading: string, body: string): string
 }
 
 async function applyPlan(target: string, files: PlannedFile[], opts: ScaffoldOptions): Promise<ScaffoldResult[]> {
+  for (const file of files) await assertSafeWritePath(target, file.path);
   const results: ScaffoldResult[] = [];
   for (const file of files) {
     const relPath = relative(target, file.path) || file.path;
-    const existsAlready = await exists(file.path);
+    const existsAlready = await entryExists(file.path);
     if (existsAlready && !opts.force) {
       results.push({ relPath, action: "skip", content: file.content });
       continue;
@@ -167,7 +169,10 @@ async function applyPlan(target: string, files: PlannedFile[], opts: ScaffoldOpt
 
     if (opts.write) {
       await mkdir(dirname(file.path), { recursive: true });
-      await writeFile(file.path, ensureTrailingNewline(file.content), "utf8");
+      await writeFile(file.path, ensureTrailingNewline(file.content), {
+        encoding: "utf8",
+        flag: opts.force ? "w" : "wx",
+      });
     }
     results.push({ relPath, action: existsAlready ? "overwrite" : "create", content: file.content });
   }
@@ -184,8 +189,10 @@ async function buildContext(
   mcpServers: McpServer[],
   skills: Skill[],
 ): Promise<Record<string, string>> {
-  const repoName = rootPackage.name ?? basename(target) ?? "TODO_REPO_NAME";
-  const repoDescription = rootPackage.description ?? "TODO: describe what this repository builds and who uses it.";
+  const repoName = clean(rootPackage.name ?? basename(target) ?? "TODO_REPO_NAME");
+  const repoDescription = clean(
+    rootPackage.description ?? "TODO: describe what this repository builds and who uses it.",
+  );
   const packageCommands = formatCommands(rootPackage.scripts ?? {}, packageManager, ".");
   const commands = await formatAllCommands(target, mise, packageManager, packageCommands);
   const workspaceTable = formatWorkspaceTable(workspaces);
@@ -229,27 +236,34 @@ function formatMcp(servers: McpServer[]): string {
   const groups = new Map<string, McpServer[]>();
   for (const server of servers) groups.set(server.file, [...(groups.get(server.file) ?? []), server]);
   return [...groups]
-    .map(([file, group]) => [`Configured in \`${file}\`:`, "", ...group.map(formatMcpServer)].join("\n"))
+    .map(([file, group]) => [`Configured in \`${clean(file)}\`:`, "", ...group.map(formatMcpServer)].join("\n"))
     .join("\n\n");
 }
 
 function formatMcpServer(server: McpServer): string {
-  if (server.transport === "stdio") return `- \`${server.name}\` - stdio (\`${server.command}\`).`;
-  if (server.transport === "unknown") return `- \`${server.name}\` - transport not recognized; see \`${server.file}\`.`;
-  return `- \`${server.name}\` - ${server.transport}.`;
+  const name = clean(server.name);
+  if (server.transport === "stdio") {
+    return server.command === undefined
+      ? `- \`${name}\` - stdio (custom command).`
+      : `- \`${name}\` - stdio (\`${clean(server.command)}\`).`;
+  }
+  if (server.transport === "unknown") return `- \`${name}\` - transport not recognized; see \`${clean(server.file)}\`.`;
+  return `- \`${name}\` - ${server.transport}.`;
 }
 
 function formatSkills(skills: Skill[]): string {
   if (skills.length === 0) {
     return "- TODO: no skills detected (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`). List skills agents should use here.";
   }
-  return skills.map((skill) => `- \`${skill.name}\` (\`${skill.path}\`) - ${skill.description}`).join("\n");
+  return skills
+    .map((skill) => `- \`${clean(skill.name)}\` (\`${clean(skill.path)}\`) - ${clean(skill.description)}`)
+    .join("\n");
 }
 
 function formatToolchain(mise: MiseInfo | null): string {
   if (!mise) return "- TODO: no mise.toml detected; record runtime versions here (or add one with `mise use`).";
-  const tools = mise.tools.map(([name, version]) => `\`${name} ${version}\``).join(", ");
-  return `Pinned in \`${mise.file}\`: ${tools}. Run \`mise install\` first.`;
+  const tools = mise.tools.map(([name, version]) => `\`${clean(name)} ${clean(version)}\``).join(", ");
+  return `Pinned in \`${clean(mise.file)}\`: ${tools}. Run \`mise install\` first.`;
 }
 
 async function formatAllCommands(
@@ -259,8 +273,8 @@ async function formatAllCommands(
   packageCommands: string,
 ): Promise<string> {
   if (!mise || mise.tasks.length === 0) return packageCommands;
-  const taskLines = mise.tasks.map((task) => `- \`mise run ${task.name}\` - ${task.summary}.`);
-  const sections = [`Tasks (\`${mise.file}\`):`, "", ...taskLines];
+  const taskLines = mise.tasks.map((task) => `- \`mise run ${clean(task.name)}\` - ${clean(task.summary)}.`);
+  const sections = [`Tasks (\`${clean(mise.file)}\`):`, "", ...taskLines];
   if (await exists(join(target, "package.json"))) {
     sections.push("", `Package scripts (\`${packageManager}\`):`, "", packageCommands);
   }
@@ -273,7 +287,7 @@ function formatCommands(scripts: Record<string, string>, packageManager: string,
   if (scope === ".") lines.push(`- \`${installCommand}\` - install dependencies.`);
 
   for (const name of ["build", "typecheck", "lint", "format", "test", "dev", "start", "codegen"]) {
-    if (scripts[name]) lines.push(`- \`${runFor(packageManager, name)}\` - runs \`${scripts[name]}\`.`);
+    if (scripts[name]) lines.push(`- \`${runFor(packageManager, name)}\` - package.json \`${clean(name)}\` script.`);
   }
 
   if (lines.length === 0) {
@@ -291,7 +305,7 @@ function formatWorkspaceTable(workspaces: WorkspaceInfo[]): string {
   }
 
   const rows = workspaces.map((workspace) => {
-    return `| \`${workspace.relDir}\` | \`${workspace.packageName}\` | ${workspace.description} |`;
+    return `| \`${clean(workspace.relDir)}\` | \`${clean(workspace.packageName)}\` | ${clean(workspace.description)} |`;
   });
   return ["| Path | Package | Purpose |", "|------|---------|---------|", ...rows].join("\n");
 }
@@ -371,4 +385,12 @@ function render(template: string, values: Record<string, string>): string {
 
 function ensureTrailingNewline(value: string): string {
   return value.endsWith("\n") ? value : `${value}\n`;
+}
+
+// Repo-detected strings must not break out of a markdown line or code span.
+function clean(value: string): string {
+  return value
+    .replace(/[\r\n]+/g, " ")
+    .replaceAll("`", "")
+    .trim();
 }

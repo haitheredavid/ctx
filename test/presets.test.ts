@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { exists } from "../src/detect.ts";
-import { PRESETS_DIR } from "../src/paths.ts";
+import { PRESETS_DIR, TEMPLATES_DIR } from "../src/paths.ts";
 
 const presetDirs = (await readdir(PRESETS_DIR, { withFileTypes: true }))
   .filter((entry) => entry.isDirectory())
@@ -30,6 +30,18 @@ async function miseTasks(preset: string): Promise<Record<string, unknown>> {
 test("presets.json describes exactly the preset directories", async () => {
   const manifest = JSON.parse(await readFile(join(PRESETS_DIR, "presets.json"), "utf8")) as Record<string, string>;
   expect(Object.keys(manifest).sort()).toEqual(presetDirs);
+});
+
+test("presets and agent-context templates are ASCII-only", async () => {
+  const offenders: string[] = [];
+  for (const root of [PRESETS_DIR, TEMPLATES_DIR]) {
+    for (const entry of await readdir(root, { recursive: true, withFileTypes: true })) {
+      if (!entry.isFile() || entry.name === ".DS_Store") continue;
+      const path = join(entry.parentPath, entry.name);
+      if (/[^ -~\t\n\r]/.test(await readFile(path, "utf8"))) offenders.push(path);
+    }
+  }
+  expect(offenders).toEqual([]);
 });
 
 describe.each(presetDirs)("preset %s", (preset) => {
@@ -65,13 +77,14 @@ describe.each(presetDirs)("preset %s", (preset) => {
     expect(config.features).toHaveProperty(["ghcr.io/devcontainers-extra/features/mise:1"]);
   });
 
-  test("AGENTS.md has MCP and Skills sections before Where To Edit; guide has one Commands section", async () => {
+  test("AGENTS.md has MCP and Skills sections before Where To Edit; one Commands section in AGENTS.md and guide", async () => {
     const lines = (await readFile(join(PRESETS_DIR, preset, "AGENTS.md"), "utf8")).split("\n");
     const where = lines.indexOf("## Where To Edit");
     for (const heading of ["## MCP Servers", "## Skills"]) {
       expect(lines.filter((line) => line === heading)).toHaveLength(1);
       expect(lines.indexOf(heading)).toBeLessThan(where);
     }
+    expect(lines.filter((line) => line === "## Commands")).toHaveLength(1);
     const guide = (await readFile(join(PRESETS_DIR, preset, ".context", "engineering-guide.md"), "utf8")).split("\n");
     expect(guide.filter((line) => line === "## Commands")).toHaveLength(1);
   });

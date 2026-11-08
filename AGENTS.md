@@ -2,7 +2,7 @@
 
 ## Project Context
 
-`ctx` = personal agent-context toolkit: stack-tailored presets + scaffolder, exposed as one Bun + TypeScript CLI (`ctx`) run from this checkout via `bin/ctx`. `ctx new` copies preset into new/empty repo; `ctx scaffold` renders generic context into existing repo from its metadata.
+`ctx` = personal agent-context toolkit: stack-tailored presets + scaffolder, exposed as one Bun + TypeScript CLI (`ctx`) run from this checkout via `bin/ctx`. `ctx new` copies preset into new/empty repo; `ctx scaffold` renders generic context into existing repo from its metadata; `ctx scaffold --preset <name>` uses that preset's stack docs instead.
 
 More durable context in `.context/` (conventions in `.context/README.md`):
 
@@ -17,8 +17,9 @@ More durable context in `.context/` (conventions in `.context/README.md`):
 |------|------|
 | `bin/ctx` | Bash shim: resolves real path through `~/.local/bin` symlink, execs `src/cli.ts` with mise-pinned bun, keeps caller cwd. |
 | `src/cli.ts` | Arg parsing, subcommands (`list`, `new`, `scaffold`, `help`), all console output. |
-| `src/presets.ts` | List presets, apply one to target dir (conflict check before any write). |
-| `src/detect.ts` | Repo metadata detection: package manager, workspaces, tsconfig, config files, `mise.toml`. |
+| `src/presets.ts` | List presets, `findPreset`/`presetFiles`, apply one to target dir (conflict check before any write). |
+| `src/detect.ts` | Repo metadata detection: package manager, workspaces, tsconfig, config files, `mise.toml`, MCP servers, skills. |
+| `src/safe-fs.ts` | Symlink-safe write checks (`entryExists`, `assertSafeWritePath`) shared by `new` and `scaffold`. |
 | `src/scaffold.ts` | Render context templates, plan/apply dry-run or write results. |
 | `presets/<variant>/` and `presets/presets.json` | Stack-tailored starter packs (`AGENTS.md`, `.context/`, `.devcontainer/`, `mise.toml`) + one-line descriptions. |
 | `templates/agent-context/` | Markdown templates for root, context guides, shim, package overlay files. |
@@ -50,7 +51,8 @@ CLI:
 - Every `mise run <task>` in preset docs must exist in that preset's `mise.toml` (enforced by `test/presets.test.ts`).
 - `ctx new` never overwrites without `--force`; writes nothing on conflict.
 - Scaffolder defaults to dry-run, skips existing files unless `--force`.
-- Detection uses repo metadata, not secret-bearing files.
+- Detection uses repo metadata, not secret-bearing files; it parses MCP config files and `SKILL.md` frontmatter but emits only server name, transport, and a sanitized command name; never args/env/headers/URL text, script bodies, or mise `run` text.
+- Writes never follow symlinks or leave the target dir; `ctx new` rolls back on failure.
 - Templates ASCII, compact, source-backed.
 
 ## Safety

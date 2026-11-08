@@ -14,19 +14,19 @@ If `[project.scripts]` is set in `pyproject.toml`, this repo also ships a develo
 
 ```
 src/<pkg>/<feature>.py (internals)
-  → src/<pkg>/__init__.py  (re-exports + __all__ = public surface)
-  → uv build               → dist/<pkg>-X.Y.Z.tar.gz + .whl  (includes py.typed)
-  → PyPI                   → consumer `from <pkg> import ...`
+  -> src/<pkg>/__init__.py  (re-exports + __all__ = public surface)
+  -> uv build               -> dist/<pkg>-X.Y.Z.tar.gz + .whl  (includes py.typed)
+  -> PyPI                   -> consumer `from <pkg> import ...`
 ```
 
 Optional CLI flow (delete if not a CLI):
 
 ```
 argv
-  → console_script entry → src/<pkg>/cli.py:main
-  → cli.py owns argv parsing and is the only module that calls sys.exit
-  → calls into the same internals as the library API
-  → exit code (0 success, non-zero on error); stderr for errors, stdout for output
+  -> console_script entry -> src/<pkg>/cli.py:main
+  -> cli.py owns argv parsing and is the only module that calls sys.exit
+  -> calls into the same internals as the library API
+  -> exit code (0 success, non-zero on error); stderr for errors, stdout for output
 ```
 
 Source of truth for the consumer contract: the package `__init__.py` plus each module's `__all__`. Anything reachable only through submodule paths (`<pkg>._internal`) is private and may change without a major bump.
@@ -59,7 +59,7 @@ For each: where the dependency comes from, what surface area is exposed, and wha
 
 ## Durable Decisions
 
-Architecture and tooling choices worth keeping, stated as decisions — not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
+Architecture and tooling choices worth keeping, stated as decisions - not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
 
 - TODO: A decision this repo has committed to, and the one-line reason it holds.
 
@@ -70,5 +70,5 @@ Architecture and tooling choices worth keeping, stated as decisions — not stat
 - No module-level I/O. Reading files / opening sockets at import time is forbidden.
 - No mutable module-level state shared across calls (constants and truly immutable singletons are fine).
 - No `Any` in public function signatures or return types. Internal `Any` only at one adapter boundary with a comment.
-- No `unittest.mock.patch` against first-party modules — fix the seam instead.
+- No `unittest.mock.patch` against first-party modules - fix the seam instead.
 - No global database / HTTP clients constructed at import. Consumers build, pass in.

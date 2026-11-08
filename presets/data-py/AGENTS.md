@@ -4,30 +4,31 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 
 ## Project Context
 
-- [.context/project-context.md](.context/project-context.md) — what this codebase is, architecture, ownership map, integrations, durable decisions.
-- [.context/engineering-guide.md](.context/engineering-guide.md) — commands, Python standards, pipeline patterns, optional Databricks / dbt sections, safety.
-- [.context/writing-tdds.md](.context/writing-tdds.md) — how to write a Technical Design Document for this repo.
-- [.context/README.md](.context/README.md) — `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
+- [.context/project-context.md](.context/project-context.md) - what this codebase is, architecture, ownership map, integrations, durable decisions.
+- [.context/engineering-guide.md](.context/engineering-guide.md) - commands, Python standards, pipeline patterns, optional Databricks / dbt sections, safety.
+- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document for this repo.
+- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
 
 ## Stack
 
 Typed Python data-pipeline repo with `uv` for dependency and environment management, `ruff` for lint/format, `ty` for static type checking, `pytest` for tests. `pydantic-settings` for env-driven configuration; `pydantic` at ingestion boundaries; `@dataclass(frozen=True, slots=True)` for internal value objects. Dataframe library TODO (pandas / polars / PySpark). Dataframe schema validation TODO (pandera / framework-native expectations / none). Warehouse TODO. Orchestrator TODO (cron / Airflow / Dagster / Databricks Jobs / dbt Cloud). If Databricks or dbt is adopted, follow the optional sections in `.context/engineering-guide.md`.
+
+- TODO if dbt: `uv run dbt build --select <model>` (see dbt section in `.context/engineering-guide.md`).
+- TODO if Databricks: `databricks bundle validate` / `deploy -t <target>` (see Databricks section in `.context/engineering-guide.md`).
 
 ## Commands
 
 Toolchain: Python 3.14 + uv, pinned in `mise.toml`. Run `mise install` once.
 
 ```
-mise run install    # uv sync — install/update from uv.lock
-mise run pipeline   # uv run python -m <pkg> run <pipeline> — run a named pipeline (TODO: confirm entry/CLI)
-mise run test       # uv run pytest — tests
-mise run lint       # uv run ruff check . — lint
-mise run format     # uv run ruff format . — format
-mise run typecheck  # uv run ty check — static type check
+mise run install    # uv sync - install/update from uv.lock
+mise run pipeline   # uv run python -m <pkg> run <pipeline> - run a named pipeline (TODO: confirm entry/CLI)
+mise run test       # uv run pytest - tests
+mise run lint       # uv run ruff check . - lint
+mise run format     # uv run ruff format . - format
+mise run typecheck  # uv run ty check - static type check
 mise run check      # lint + typecheck + test
 uv run pytest -k <expr>              # filtered tests
-# TODO if dbt: uv run dbt build --select <model>
-# TODO if Databricks: databricks bundle validate / deploy -t <target>
 ```
 
 Cite exact command scope. Do not claim a command runs every test unless `pyproject.toml` / `pytest.ini` proves it.
@@ -42,7 +43,7 @@ Cite exact command scope. Do not claim a command runs every test unless `pyproje
 - Layout: `src/<pkg>/` source, `tests/` mirrors the package tree. `__init__.py` per package, but keep them empty or expose narrow public APIs only.
 - Pipelines are idempotent and re-runnable: re-running for the same partition produces the same result (overwrite-by-partition or merge-by-key, never blind append).
 - Validate at ingestion: external records pass through `pydantic.BaseModel` (row-level) or a dataframe schema check (TODO: tool) before entering transforms.
-- Every published dataset has an explicit partition/key strategy. Backfills run the same code with partition-range parameters — no one-off scripts.
+- Every published dataset has an explicit partition/key strategy. Backfills run the same code with partition-range parameters - no one-off scripts.
 - Notebooks (if any) are thin wrappers over package code, never the source of truth. See `.context/engineering-guide.md`.
 
 ## Safety
@@ -53,11 +54,11 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 
 ## MCP Servers
 
-- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`).
 
 ## Skills
 
-- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`). Run `ctx scaffold --preset <name>` to detect them.
+- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`).
 
 ## Where To Edit
 
@@ -68,10 +69,10 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 | `uv.lock` | Resolved dependency lockfile. Do not hand-edit. |
 | `src/<pkg>/settings.py` | `Settings(BaseSettings)`. The one place env vars are read. |
 | `src/<pkg>/__main__.py` | Pipeline CLI entry. Builds `Settings`, wires adapters, runs a named pipeline. |
-| `src/<pkg>/pipelines/<name>/` | One pipeline per dir: `ingest.py`, `transform.py`, `publish.py` (TODO: or bronze/silver/gold — pick one stage convention). |
+| `src/<pkg>/pipelines/<name>/` | One pipeline per dir: `ingest.py`, `transform.py`, `publish.py` (TODO: or bronze/silver/gold - pick one stage convention). |
 | `src/<pkg>/contracts/` | Pydantic ingestion models + dataframe schemas. The data contracts. |
 | `src/<pkg>/io/` | Warehouse / object-storage / source-API adapters. Only layer that knows connection details. |
-| `sql/` | TODO: SQL transforms if any (or a dbt project — see optional section in engineering guide). |
+| `sql/` | TODO: SQL transforms if any (or a dbt project - see optional section in engineering guide). |
 | `tests/` | Pytest suite mirroring `src/`. |
 | `tests/fixtures/` | Small committed synthetic sample data for pipeline tests. |
 | `.context/` | Durable architecture, decisions, debt. |

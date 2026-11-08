@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { applyPreset, listPresets, type Preset } from "./presets.ts";
+import { isDirectory } from "./detect.ts";
+import { applyPreset, findPreset, listPresets, type Preset } from "./presets.ts";
 import { type ScaffoldOptions, scaffold } from "./scaffold.ts";
 
 const USAGE = `Usage: ctx <command> [options]
@@ -21,7 +22,18 @@ Commands:
 
 Base files: AGENTS.md, .context/{project-context,engineering-guide,writing-tdds,README}.md,
 and .context/active/ (an empty, tracked folder for dated in-flight design docs).
+With --preset: the preset's files (including .devcontainer/), plus mise.toml when the repo has no mise config.
 `;
+
+// Flags in the order they first appear in USAGE, so the first offending flag is reported consistently.
+const FLAGS = ["preset", "force", "write", "agent-shim", "package-overlays"] as const;
+type Flag = (typeof FLAGS)[number];
+
+const COMMANDS = new Map<string, { maxArgs: number; flags: readonly Flag[] }>([
+  ["list", { maxArgs: 0, flags: [] }],
+  ["new", { maxArgs: 1, flags: ["preset", "force"] }],
+  ["scaffold", { maxArgs: 1, flags: FLAGS }],
+]);
 
 async function main(argv: string[]): Promise<void> {
   const { values, positionals } = parseArgs({
@@ -44,6 +56,18 @@ async function main(argv: string[]): Promise<void> {
     return;
   }
 
+  const spec = COMMANDS.get(command);
+  if (!spec) {
+    console.error(`error: unknown command '${command}'`);
+    console.error(USAGE);
+    process.exitCode = 1;
+    return;
+  }
+  const extra = rest[spec.maxArgs];
+  if (extra !== undefined) throw new Error(`unexpected argument '${extra}'`);
+  const invalid = FLAGS.find((flag) => values[flag] !== undefined && !spec.flags.includes(flag));
+  if (invalid) throw new Error(`option '--${invalid}' is not valid for '${command}'`);
+
   switch (command) {
     case "list":
       return runList();
@@ -57,10 +81,6 @@ async function main(argv: string[]): Promise<void> {
         packageOverlays: values["package-overlays"] ?? false,
         preset: values.preset,
       });
-    default:
-      console.error(`error: unknown command '${command}'`);
-      console.error(USAGE);
-      process.exitCode = 1;
   }
 }
 
@@ -81,7 +101,7 @@ async function runNew(dir: string | undefined, presetName: string | undefined, f
 Applied preset: ${name} -> ${target}
 
 Next:
-  cd ${target}
+  cd '${target}'
   mise trust && mise install
   grep -rn TODO AGENTS.md .context/ mise.toml`);
   if (!existsSync(join(target, ".git"))) {
@@ -109,7 +129,10 @@ async function pickPreset(presets: Preset[]): Promise<string> {
 
 async function runScaffold(repo: string | undefined, opts: Omit<ScaffoldOptions, "target">): Promise<void> {
   const target = resolve(process.cwd(), repo ?? ".");
-  const presetNote = opts.preset ? ` (preset ${opts.preset})` : "";
+  if (!(await isDirectory(target))) throw new Error(`${target} is not a directory`);
+  // Validate the preset up front so an unknown name errors before the header is printed.
+  if (opts.preset !== undefined) await findPreset(opts.preset);
+  const presetNote = opts.preset !== undefined ? ` (preset ${opts.preset})` : "";
   console.log(`${opts.write ? "write" : "dry-run"}: ${target}${presetNote}`);
   const results = await scaffold({ target, ...opts });
   for (const result of results) {

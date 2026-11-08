@@ -23,7 +23,7 @@ Toolchain: Node 26 + pnpm 12 and Python 3.14 + uv, pinned in `mise.toml`. Run `m
 | Command | Scope |
 |---|---|
 | `mise run web:install` | Install deps. `pnpm install` |
-| `mise run web:dev` | Vite dev server. Proxies `/api` → `http://localhost:8000`. `pnpm run dev` |
+| `mise run web:dev` | Vite dev server. Proxies `/api` -> `http://localhost:8000`. `pnpm run dev` |
 | `mise run web:gen-api` | Runs `api:openapi` first. `openapi-typescript ../shared/openapi.json -o src/api-client/types.ts` (or your generator of choice). `pnpm run gen:api` |
 | `mise run web:typecheck` | `tsc --noEmit`. `pnpm run typecheck` |
 | `mise run web:lint` | Biome or ESLint. `pnpm run lint` |
@@ -42,14 +42,14 @@ Flow:
 
 1. Edit / add a pydantic `BaseModel` in `api/`.
 2. Run `uv run python -m <pkg>.scripts.emit_openapi > ../shared/openapi.json`.
-3. From `web/`, run `<pkg> run gen:api` to refresh `web/src/api-client/types.ts`.
+3. Run `mise run web:gen-api` to refresh `web/src/api-client/types.ts`.
 4. Commit `models/`, `shared/openapi.json`, and the generated types together.
 
 Rules:
 
 - The web client **never** authors a type that overlaps with an API response shape. Always pull from generated types.
 - If you find yourself patching `types.ts` by hand to fix a TS error, the fix belongs in the pydantic model (or the route's `response_model`). Regenerate.
-- Treat `shared/openapi.json` as a build artifact that is also a contract — committed for traceability, regenerated on every model change.
+- Treat `shared/openapi.json` as a build artifact that is also a contract - committed for traceability, regenerated on every model change.
 
 ## API (Python) Standards
 
@@ -77,7 +77,7 @@ Inherit the rules from the standalone `frontend-ts` preset. Highlights:
 
 ## Dev Loop
 
-- Two terminals: `cd api && uv run uvicorn ...` and `cd web && <pkg> run dev`.
+- Two terminals: `cd api && uv run uvicorn ...` and `mise run web:dev`.
 - Vite proxies `/api` to the FastAPI port. Web fetches `/api/...` and never knows the API origin in dev.
 - When you change a pydantic model: regenerate `shared/openapi.json` and `web/src/api-client/types.ts` before web typechecks.
 
@@ -126,9 +126,9 @@ Metadata reads inside excluded dirs are fine when the file itself is the source 
 
 ## Settings
 
-Each side owns its own typed settings seam. Settings never cross the contract — only request/response shapes do.
+Each side owns its own typed settings seam. Settings never cross the contract - only request/response shapes do.
 
-**API (`api/`)** — `Settings(BaseSettings)` in `api/src/<pkg>/settings.py` is the only env reader:
+**API (`api/`)** - `Settings(BaseSettings)` in `api/src/<pkg>/settings.py` is the only env reader:
 
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -141,7 +141,7 @@ class Settings(BaseSettings):
 
 Constructed once in `api/src/<pkg>/main.py` (the app factory). Services take `Settings` (or specific fields) in. **Never** `os.environ.get(...)` in domain code.
 
-**Web (`web/`)** — `web/src/env.ts` is the only module that reads `import.meta.env`:
+**Web (`web/`)** - `web/src/env.ts` is the only module that reads `import.meta.env`:
 
 ```ts
 import { z } from "zod";
@@ -159,7 +159,7 @@ Rules:
 - API secrets never reach the web bundle. The only API-related value in `web/` is the public base URL (and even that is optional in same-origin deploys).
 - New API env var: extend `Settings`, update `api/.env.example`, document any operational rollout in `.context/project-context.md`.
 - New web env var: extend the Zod schema, add to `web/.env.example`, prefix with `VITE_`.
-- Tests on each side build settings from overrides — never mutate `os.environ` or `import.meta.env` globally.
+- Tests on each side build settings from overrides - never mutate `os.environ` or `import.meta.env` globally.
 
 ## Safety: Do Not Read
 
@@ -173,12 +173,12 @@ Rules:
 
 Metadata reads are fine: `pyproject.toml`, `uv.lock`, `package.json`, `tsconfig*.json`, lock files, `vite.config.ts`, `ruff.toml`, `pytest.ini`, and `shared/openapi.json`.
 
-Use `.env.example` only for variable names. Preserve unrelated dirty work — never revert files you did not intentionally change.
+Use `.env.example` only for variable names. Preserve unrelated dirty work - never revert files you did not intentionally change.
 
 ## Commits
 
 - **One concern per commit.** Do not bundle a refactor with a feature with a dep bump.
-- **Subject ≤ 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
+- **Subject <= 72 chars, imperative mood.** Conventional prefix when useful (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`).
 - **Body explains *why*, not *what*.** The diff shows what.
 - **Contract changes ride together.** A pydantic model edit in `api/` commits in the same change as the regenerated `shared/openapi.json` and `web/src/api-client/types.ts`. Splitting them creates silent drift.
 - **Lockfile updates commit with the source change** that triggered them (`uv.lock` with `pyproject.toml`; web lockfile with `package.json`).
@@ -198,7 +198,7 @@ NOTES.md
 SCRATCH.md
 ```
 
-- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch — do not add it to `.gitignore`.
+- `AGENTS.md` is **durable** and stays committed. It is the canonical entrypoint, not scratch - do not add it to `.gitignore`.
 - Durable architecture, decisions, and short-lived focus notes belong in `.context/` (committed). Scratch belongs at root (ignored).
 - A plan worth keeping graduates into a dated design doc under `.context/active/` (see `.context/README.md`) or into the PR description before the scratch file is discarded. Do not park it in a root scratch file.
 
@@ -207,6 +207,6 @@ SCRATCH.md
 - Keep `AGENTS.md` compact. Push detail into these files.
 - Update `Commands` when scripts change in either side.
 - Update `.context/project-context.md` when architecture, integrations, or ownership shift.
-- Every API model change triggers contract regen. If you change `models/` without committing the new `openapi.json` and `types.ts`, the contract drifts silently — treat that as a bug.
+- Every API model change triggers contract regen. If you change `models/` without committing the new `openapi.json` and `types.ts`, the contract drifts silently - treat that as a bug.
 - Record durable cross-language decisions (deploy topology, auth scheme, error envelope, pagination model) in `.context/project-context.md`.
 - In-flight design docs live in `.context/active/` as `YYYYMMDD-<title>.md`; the PR that lands the work deletes the doc.

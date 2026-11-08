@@ -16,7 +16,7 @@ description = "Biome or ESLint"
 run = "pnpm run lint"
 
 [tasks.build]
-description = "tsc -p tsconfig.build.json → dist/"
+description = "tsc -p tsconfig.build.json -> dist/"
 run = "pnpm run build"
 
 [tasks.test]

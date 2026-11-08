@@ -14,18 +14,18 @@ If `bin` is set in `package.json`, this repo also ships a developer CLI built fr
 
 ```
 src/<feature>.ts (internals)
-  → src/index.ts  (barrel — public surface)
-  → tsc build      → dist/index.{js,d.ts}
-  → npm registry   → consumer `import { ... } from "<pkg>"`
+  -> src/index.ts  (barrel - public surface)
+  -> tsc build      -> dist/index.{js,d.ts}
+  -> npm registry   -> consumer `import { ... } from "<pkg>"`
 ```
 
 Optional CLI flow (delete if not a CLI):
 
 ```
 argv
-  → src/cli.ts  (only file that touches node:process / node:fs)
-  → calls into the same internals as the library API
-  → exit code (0 success, non-zero on error); stderr for errors, stdout for output
+  -> src/cli.ts  (only file that touches node:process / node:fs)
+  -> calls into the same internals as the library API
+  -> exit code (0 success, non-zero on error); stderr for errors, stdout for output
 ```
 
 Source of truth for the consumer contract: `src/index.ts` plus the emitted `dist/index.d.ts`. Anything reachable only through deep imports is private and may change without a major bump.
@@ -34,7 +34,7 @@ Source of truth for the consumer contract: `src/index.ts` plus the emitted `dist
 
 | Path | Owns |
 |---|---|
-| `src/index.ts` | Public surface. Re-exports only — no inline logic. |
+| `src/index.ts` | Public surface. Re-exports only - no inline logic. |
 | `src/*.ts` | Internal modules. Importable inside the package; not contract. |
 | `src/__tests__/` | Vitest unit tests. |
 | `src/cli.ts` | (Optional) CLI entry. Only file allowed `node:*` imports. |
@@ -59,7 +59,7 @@ For each: where the dependency comes from, what surface area is exposed, and wha
 
 ## Durable Decisions
 
-Architecture and tooling choices worth keeping, stated as decisions — not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
+Architecture and tooling choices worth keeping, stated as decisions - not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
 
 - TODO: A decision this repo has committed to, and the one-line reason it holds.
 

@@ -12,12 +12,12 @@ Default assumption baked into this preset: a TypeScript single-page application 
 
 ```
 user interaction
-  → React component (local state)
-  → store / hook (UI state, derived data)
-  → API client (typed request to backend)
-  → backend (TODO: own repo or src/server/)
-  → typed response
-  → render success / error UI
+  -> React component (local state)
+  -> store / hook (UI state, derived data)
+  -> API client (typed request to backend)
+  -> backend (TODO: own repo or src/server/)
+  -> typed response
+  -> render success / error UI
 ```
 
 Source of truth for UI state lives in the client. Source of truth for domain data lives behind the API. Never duplicate domain state in the browser beyond what is needed to render the current view.
@@ -48,7 +48,7 @@ For each: where credentials are sourced, what is safe to expose in the bundle, w
 
 ## Durable Decisions
 
-Architecture and tooling choices worth keeping, stated as decisions — not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
+Architecture and tooling choices worth keeping, stated as decisions - not status or progress. In-flight work and known gaps live in `.context/active/` docs, issues, or PRs, never here.
 
 - TODO: A decision this repo has committed to, and the one-line reason it holds.
 
@@ -58,4 +58,4 @@ Architecture and tooling choices worth keeping, stated as decisions — not stat
 - No direct database access from the client.
 - No arbitrary SQL/query editor unless explicitly approved.
 - No global mutable state outside the chosen store.
-- No unbounded data fetched on mount — paginate or scope by view.
+- No unbounded data fetched on mount - paginate or scope by view.
