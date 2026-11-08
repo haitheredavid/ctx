@@ -64,4 +64,15 @@ describe.each(presetDirs)("preset %s", (preset) => {
     ) as { features?: Record<string, unknown> };
     expect(config.features).toHaveProperty(["ghcr.io/devcontainers-extra/features/mise:1"]);
   });
+
+  test("AGENTS.md has MCP and Skills sections before Where To Edit; guide has one Commands section", async () => {
+    const lines = (await readFile(join(PRESETS_DIR, preset, "AGENTS.md"), "utf8")).split("\n");
+    const where = lines.indexOf("## Where To Edit");
+    for (const heading of ["## MCP Servers", "## Skills"]) {
+      expect(lines.filter((line) => line === heading)).toHaveLength(1);
+      expect(lines.indexOf(heading)).toBeLessThan(where);
+    }
+    const guide = (await readFile(join(PRESETS_DIR, preset, ".context", "engineering-guide.md"), "utf8")).split("\n");
+    expect(guide.filter((line) => line === "## Commands")).toHaveLength(1);
+  });
 });

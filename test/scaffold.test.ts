@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { exists } from "../src/detect.ts";
-import { type ScaffoldOptions, scaffold } from "../src/scaffold.ts";
+import { type ScaffoldOptions, type ScaffoldResult, scaffold } from "../src/scaffold.ts";
 
 const BASE_FILES = [
   "AGENTS.md",
@@ -57,10 +57,14 @@ async function monorepoFixture(): Promise<void> {
   await writeFile(join(tmp, "mise.toml"), MISE_TOML);
 }
 
-function agentsContent(results: Awaited<ReturnType<typeof scaffold>>): string {
-  const agents = results.find((r) => r.relPath === "AGENTS.md");
-  if (!agents) throw new Error("AGENTS.md not planned");
-  return agents.content;
+function contentOf(results: ScaffoldResult[], relPath: string): string {
+  const file = results.find((r) => r.relPath === relPath);
+  if (!file) throw new Error(`${relPath} not planned`);
+  return file.content;
+}
+
+function agentsContent(results: ScaffoldResult[]): string {
+  return contentOf(results, "AGENTS.md");
 }
 
 test("dry-run renders mise tasks, tools, package scripts, and workspaces without writing", async () => {
@@ -106,4 +110,84 @@ test("bun lockfile without mise uses bun commands and a toolchain TODO", async (
 test("malformed mise.toml is reported", async () => {
   await writeFile(join(tmp, "mise.toml"), "[tools");
   await expect(scaffold(opts())).rejects.toThrow("Failed to read TOML");
+});
+
+test("MCP servers are listed by name and transport without leaking args, env, or URLs", async () => {
+  await writeJson(join(tmp, ".mcp.json"), {
+    mcpServers: {
+      github: {
+        command: "/usr/local/bin/npx",
+        args: ["-y", "pkg", "--token", "argsecret"],
+        env: { GITHUB_TOKEN: "envsecret" },
+      },
+      remote: { type: "http", url: "https://mcp.example.com/?token=urlsecret" },
+      stream: { type: "sse", url: "https://x" },
+    },
+  });
+
+  const content = agentsContent(await scaffold(opts()));
+  expect(content).toContain("Configured in `.mcp.json`:");
+  expect(content).toContain("- `github` - stdio (`npx`).");
+  expect(content).toContain("- `remote` - http.");
+  expect(content).toContain("- `stream` - sse.");
+  for (const secret of ["argsecret", "envsecret", "urlsecret"]) expect(content).not.toContain(secret);
+});
+
+test("Codex TOML MCP servers are detected", async () => {
+  await mkdir(join(tmp, ".codex"));
+  await writeFile(join(tmp, ".codex", "config.toml"), '[mcp_servers.docs]\ncommand = "uvx"\n');
+  expect(agentsContent(await scaffold(opts()))).toContain("- `docs` - stdio (`uvx`).");
+});
+
+test("skills are listed from frontmatter, falling back to directory name", async () => {
+  await mkdir(join(tmp, ".claude", "skills", "deploy"), { recursive: true });
+  await writeFile(
+    join(tmp, ".claude", "skills", "deploy", "SKILL.md"),
+    "---\nname: deploy\ndescription: >\n  Ship it\n  to prod.\n---\nbody",
+  );
+  await mkdir(join(tmp, ".agents", "skills", "lint-fix"), { recursive: true });
+  await writeFile(join(tmp, ".agents", "skills", "lint-fix", "SKILL.md"), "# Lint fix\n");
+
+  const content = agentsContent(await scaffold(opts()));
+  expect(content).toContain("- `deploy` (`.claude/skills/deploy/SKILL.md`) - Ship it to prod.");
+  expect(content).toContain("- `lint-fix` (`.agents/skills/lint-fix/SKILL.md`) - (no description)");
+});
+
+test("empty repo gets MCP and skills TODOs", async () => {
+  const content = agentsContent(await scaffold(opts()));
+  expect(content).toContain("no MCP config detected");
+  expect(content).toContain("no skills detected");
+});
+
+test("preset with repo mise.toml uses repo commands and skips preset mise.toml", async () => {
+  await writeFile(join(tmp, "mise.toml"), MISE_TOML);
+  await writeJson(join(tmp, ".mcp.json"), { mcpServers: { gh: { command: "npx" } } });
+
+  const results = await scaffold(opts({ preset: "api-ts" }));
+  const relPaths = results.map((r) => r.relPath);
+  expect(relPaths).not.toContain("mise.toml");
+  expect(relPaths).toContain(".devcontainer/devcontainer.json");
+
+  const content = agentsContent(results);
+  expect(content).toContain("## Stack");
+  expect(content).toContain("Hono");
+  expect(content).toContain("- `mise run test` - Run tests.");
+  expect(content).toContain("- `gh` - stdio (`npx`).");
+  expect(content).not.toContain("mise run openapi:export");
+  expect(content).not.toContain("- TODO: list MCP servers");
+
+  const guide = contentOf(results, ".context/engineering-guide.md");
+  expect(guide).toContain("`mise run test` - Run tests.");
+  expect(guide).not.toContain("openapi:export");
+  expect(await exists(join(tmp, "AGENTS.md"))).toBe(false);
+});
+
+test("preset without repo mise.toml keeps preset commands and plans its mise.toml", async () => {
+  const results = await scaffold(opts({ preset: "api-ts" }));
+  expect(results.find((r) => r.relPath === "mise.toml")?.action).toBe("create");
+  expect(agentsContent(results)).toContain("mise run openapi:export");
+});
+
+test("unknown preset is rejected", async () => {
+  await expect(scaffold(opts({ preset: "nope" }))).rejects.toThrow("unknown preset 'nope'");
 });

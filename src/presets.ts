@@ -18,19 +18,27 @@ export async function listPresets(): Promise<Preset[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function applyPreset(opts: { preset: string; target: string; force: boolean }): Promise<string[]> {
+export async function findPreset(name: string): Promise<Preset> {
   const presets = await listPresets();
-  const preset = presets.find((p) => p.name === opts.preset);
+  const preset = presets.find((p) => p.name === name);
   if (!preset) {
     const names = presets.map((p) => p.name);
-    throw new Error(`unknown preset '${opts.preset}'. Available: ${names.join(", ")}`);
+    throw new Error(`unknown preset '${name}'. Available: ${names.join(", ")}`);
   }
+  return preset;
+}
 
+export async function presetFiles(preset: Preset): Promise<string[]> {
   const entries = await readdir(preset.dir, { recursive: true, withFileTypes: true });
-  const relPaths = entries
+  return entries
     .filter((entry) => entry.isFile() && entry.name !== ".DS_Store")
     .map((entry) => relative(preset.dir, join(entry.parentPath, entry.name)))
     .sort();
+}
+
+export async function applyPreset(opts: { preset: string; target: string; force: boolean }): Promise<string[]> {
+  const preset = await findPreset(opts.preset);
+  const relPaths = await presetFiles(preset);
 
   if (!opts.force) {
     const conflicts: string[] = [];

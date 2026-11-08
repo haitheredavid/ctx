@@ -1,5 +1,5 @@
 import { access, readdir, readFile, stat } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 
 export type PackageJson = {
   name?: string;
@@ -43,21 +43,8 @@ export type MiseInfo = {
 
 export async function detectMise(target: string): Promise<MiseInfo | null> {
   for (const file of ["mise.toml", ".mise.toml"]) {
-    const path = join(target, file);
-    let text: string;
-    try {
-      text = await readFile(path, "utf8");
-    } catch (error) {
-      if (isNotFound(error)) continue;
-      throw error;
-    }
-
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = Bun.TOML.parse(text) as Record<string, unknown>;
-    } catch (error) {
-      throw new Error(`Failed to read TOML ${path}: ${(error as Error).message}`);
-    }
+    const parsed = await readToml(join(target, file));
+    if (!parsed) continue;
 
     const rawTools = isTable(parsed.tools) ? parsed.tools : {};
     const tools = Object.entries(rawTools).map(([name, value]): [string, string] => [name, formatToolVersion(value)]);
@@ -97,6 +84,119 @@ function isTable(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+export type McpServer = {
+  file: string;
+  name: string;
+  transport: "stdio" | "http" | "sse" | "unknown";
+  command?: string;
+};
+
+export type Skill = { name: string; path: string; description: string };
+
+const MCP_SOURCES: { file: string; format: "json" | "toml"; key: string }[] = [
+  { file: ".mcp.json", format: "json", key: "mcpServers" },
+  { file: ".cursor/mcp.json", format: "json", key: "mcpServers" },
+  { file: ".vscode/mcp.json", format: "json", key: "servers" },
+  { file: ".codex/config.toml", format: "toml", key: "mcp_servers" },
+];
+
+const SKILL_ROOTS = [".claude/skills", ".agents/skills"];
+
+// Only name, transport, and command basename leave this function: args, env, headers, and URLs routinely hold tokens.
+export async function detectMcp(target: string): Promise<McpServer[]> {
+  const servers: McpServer[] = [];
+  for (const source of MCP_SOURCES) {
+    const path = join(target, source.file);
+    const parsed = source.format === "json" ? await readJson<Record<string, unknown>>(path) : await readToml(path);
+    const entries = isTable(parsed) ? parsed[source.key] : undefined;
+    if (!isTable(entries)) continue;
+    for (const [name, entry] of Object.entries(entries)) {
+      servers.push({ file: source.file, name, ...classifyMcpServer(entry) });
+    }
+  }
+  return servers;
+}
+
+function classifyMcpServer(entry: unknown): Pick<McpServer, "transport" | "command"> {
+  if (!isTable(entry)) return { transport: "unknown" };
+  if (typeof entry.command === "string") return { transport: "stdio", command: basename(entry.command) };
+  if (entry.type === "sse") return { transport: "sse" };
+  const isHttp =
+    entry.type === "http" ||
+    entry.type === "streamable-http" ||
+    typeof entry.url === "string" ||
+    typeof entry.httpUrl === "string" ||
+    typeof entry.serverUrl === "string";
+  return { transport: isHttp ? "http" : "unknown" };
+}
+
+export async function detectSkills(target: string): Promise<Skill[]> {
+  const skills: Skill[] = [];
+  for (const rootRel of SKILL_ROOTS) {
+    const root = join(target, rootRel);
+    if (!(await isDirectory(root))) continue;
+    for (const entry of await readdir(root, { withFileTypes: true })) {
+      if (entry.name.startsWith(".") || !(await isDirectory(join(root, entry.name)))) continue;
+      const skillFile = join(root, entry.name, "SKILL.md");
+      if (!(await exists(skillFile))) continue;
+      const meta = parseFrontmatter(await readFile(skillFile, "utf8"));
+      skills.push({
+        name: meta.name || entry.name,
+        path: relative(target, skillFile),
+        description: summarizeDescription(meta.description),
+      });
+    }
+  }
+  return skills.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+function summarizeDescription(value: string | undefined): string {
+  const collapsed = (value ?? "").replace(/\s+/g, " ").trim();
+  if (!collapsed) return "(no description)";
+  return collapsed.length > 120 ? `${collapsed.slice(0, 117)}...` : collapsed;
+}
+
+// Minimal YAML frontmatter reader: flat `key: value` pairs plus indented block/folded continuations.
+function parseFrontmatter(text: string): Record<string, string> {
+  if (!text.startsWith("---\n")) return {};
+  const lines = text.slice(4).split("\n");
+  const end = lines.indexOf("---");
+  const body = end === -1 ? lines : lines.slice(0, end);
+  const result: Record<string, string> = {};
+  for (let i = 0; i < body.length; i++) {
+    const match = /^([A-Za-z_][\w-]*):\s*(.*)$/.exec(body[i] as string);
+    if (!match) continue;
+    const key = match[1] as string;
+    let value = (match[2] as string).trim();
+    if (["", ">", "|", ">-", "|-"].includes(value)) {
+      const parts: string[] = [];
+      while (i + 1 < body.length && /^\s/.test(body[i + 1] as string)) {
+        i++;
+        parts.push((body[i] as string).trim());
+      }
+      value = parts.join(" ");
+    }
+    const quoted = /^(["'])(.*)\1$/.exec(value);
+    result[key] = quoted ? (quoted[2] as string) : value;
+  }
+  return result;
+}
+
+async function readToml(path: string): Promise<Record<string, unknown> | null> {
+  let text: string;
+  try {
+    text = await readFile(path, "utf8");
+  } catch (error) {
+    if (isNotFound(error)) return null;
+    throw error;
+  }
+  try {
+    return Bun.TOML.parse(text) as Record<string, unknown>;
+  } catch (error) {
+    throw new Error(`Failed to read TOML ${path}: ${(error as Error).message}`);
+  }
+}
+
 export async function formatDetectedConfigs(target: string): Promise<string> {
   const names = [
     "package.json",
@@ -105,6 +205,10 @@ export async function formatDetectedConfigs(target: string): Promise<string> {
     ".tool-versions",
     "hk.pkl",
     "bun.lock",
+    ".mcp.json",
+    ".cursor/mcp.json",
+    ".vscode/mcp.json",
+    ".codex/config.toml",
     "tsconfig.json",
     "tsconfig.base.json",
     "biome.json",

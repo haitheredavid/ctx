@@ -48,6 +48,14 @@ Do not read `.env`, `.secrets`, certs, tokens, DSNs, cloud credentials. Do not c
 
 Search scope, "no settings" rule, and commit/changelog style live in [`.context/engineering-guide.md`](.context/engineering-guide.md).
 
+## MCP Servers
+
+- TODO: list MCP servers agents may use (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`). Run `ctx scaffold --preset <name>` to detect them.
+
+## Skills
+
+- TODO: list agent skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`). Run `ctx scaffold --preset <name>` to detect them.
+
 ## Where To Edit
 
 | File | Owns |

@@ -1,21 +1,26 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative } from "node:path";
 import {
+  detectMcp,
   detectMise,
   detectPackageManager,
+  detectSkills,
   detectWorkspaces,
   exists,
   formatDetectedConfigs,
   installFor,
+  type McpServer,
   type MiseInfo,
   type PackageJson,
   readFirstJson,
   readJson,
   runFor,
+  type Skill,
   type TsConfig,
   type WorkspaceInfo,
 } from "./detect.ts";
 import { TEMPLATES_DIR } from "./paths.ts";
+import { findPreset, type Preset, presetFiles } from "./presets.ts";
 
 export type ScaffoldOptions = {
   target: string;
@@ -23,7 +28,11 @@ export type ScaffoldOptions = {
   force: boolean;
   agentShim: boolean;
   packageOverlays: boolean;
+  preset?: string;
 };
+
+const COMMAND_SCOPE_NOTE =
+  "Do not overstate command scope. If a command only runs part of the suite, say that exactly.";
 
 export type ScaffoldResult = { relPath: string; action: "create" | "overwrite" | "skip"; content: string };
 
@@ -45,30 +54,26 @@ const SECRET_PATHS = [
 
 export async function scaffold(opts: ScaffoldOptions): Promise<ScaffoldResult[]> {
   const target = opts.target;
+  const preset = opts.preset ? await findPreset(opts.preset) : null;
   const rootPackage = (await readJson<PackageJson>(join(target, "package.json"))) ?? {};
   const tsConfig = await readFirstJson<TsConfig>(target, ["tsconfig.json", "tsconfig.base.json"]);
   const packageManager = await detectPackageManager(target, rootPackage);
   const workspaces = await detectWorkspaces(target, rootPackage);
   const mise = await detectMise(target);
-  const context = await buildContext(target, rootPackage, tsConfig, packageManager, workspaces, mise);
+  const mcpServers = await detectMcp(target);
+  const skills = await detectSkills(target);
+  const context = await buildContext(
+    target,
+    rootPackage,
+    tsConfig,
+    packageManager,
+    workspaces,
+    mise,
+    mcpServers,
+    skills,
+  );
 
-  const files: PlannedFile[] = [
-    { path: join(target, "AGENTS.md"), content: render(await loadTemplate("AGENTS.md.tmpl"), context) },
-    {
-      path: join(target, ".context", "project-context.md"),
-      content: render(await loadTemplate("project-context.md.tmpl"), context),
-    },
-    {
-      path: join(target, ".context", "engineering-guide.md"),
-      content: render(await loadTemplate("engineering-guide.md.tmpl"), context),
-    },
-    {
-      path: join(target, ".context", "writing-tdds.md"),
-      content: render(await loadTemplate("writing-tdds.md.tmpl"), context),
-    },
-    { path: join(target, ".context", "README.md"), content: render(await loadTemplate("README.md.tmpl"), context) },
-    { path: join(target, ".context", "active", ".gitkeep"), content: "" },
-  ];
+  const files = preset ? await planPresetFiles(target, preset, context, mise) : await planGenericFiles(target, context);
 
   if (opts.agentShim) {
     files.push({ path: join(target, "AGENT.md"), content: render(await loadTemplate("AGENT.md.tmpl"), context) });
@@ -91,6 +96,63 @@ export async function scaffold(opts: ScaffoldOptions): Promise<ScaffoldResult[]>
   }
 
   return applyPlan(target, files, opts);
+}
+
+async function planGenericFiles(target: string, context: Record<string, string>): Promise<PlannedFile[]> {
+  return [
+    { path: join(target, "AGENTS.md"), content: render(await loadTemplate("AGENTS.md.tmpl"), context) },
+    {
+      path: join(target, ".context", "project-context.md"),
+      content: render(await loadTemplate("project-context.md.tmpl"), context),
+    },
+    {
+      path: join(target, ".context", "engineering-guide.md"),
+      content: render(await loadTemplate("engineering-guide.md.tmpl"), context),
+    },
+    {
+      path: join(target, ".context", "writing-tdds.md"),
+      content: render(await loadTemplate("writing-tdds.md.tmpl"), context),
+    },
+    { path: join(target, ".context", "README.md"), content: render(await loadTemplate("README.md.tmpl"), context) },
+    { path: join(target, ".context", "active", ".gitkeep"), content: "" },
+  ];
+}
+
+// With a repo mise config, its tasks are the source of truth: preset Commands sections are replaced with the
+// detected commands and the preset's mise.toml is never planned (not even with --force).
+async function planPresetFiles(
+  target: string,
+  preset: Preset,
+  context: Record<string, string>,
+  mise: MiseInfo | null,
+): Promise<PlannedFile[]> {
+  const commandsBody = `${context.toolchain}\n\n${context.commands}\n\n${COMMAND_SCOPE_NOTE}`;
+  const files: PlannedFile[] = [];
+  for (const rel of await presetFiles(preset)) {
+    if (mise && rel === "mise.toml") continue;
+    let content = await readFile(join(preset.dir, rel), "utf8");
+    if (rel === "AGENTS.md") {
+      content = replaceSection(content, "MCP Servers", context.mcpServers ?? "");
+      content = replaceSection(content, "Skills", context.skills ?? "");
+    }
+    if (mise && (rel === "AGENTS.md" || rel === join(".context", "engineering-guide.md"))) {
+      content = replaceSection(content, "Commands", commandsBody);
+    }
+    files.push({ path: join(target, rel), content });
+  }
+  return files;
+}
+
+function replaceSection(markdown: string, heading: string, body: string): string {
+  const lines = markdown.split("\n");
+  const start = lines.indexOf(`## ${heading}`);
+  if (start === -1) throw new Error(`preset file missing section '## ${heading}'`);
+  const nextOffset = lines.slice(start + 1).findIndex((line) => line.startsWith("## "));
+  const before = lines.slice(0, start).join("\n");
+  const prefix = start > 0 ? `${before}\n` : "";
+  if (nextOffset === -1) return `${prefix}## ${heading}\n\n${body}\n`;
+  const rest = lines.slice(start + 1 + nextOffset).join("\n");
+  return `${prefix}## ${heading}\n\n${body}\n\n${rest}`;
 }
 
 async function applyPlan(target: string, files: PlannedFile[], opts: ScaffoldOptions): Promise<ScaffoldResult[]> {
@@ -119,6 +181,8 @@ async function buildContext(
   packageManager: string,
   workspaces: WorkspaceInfo[],
   mise: MiseInfo | null,
+  mcpServers: McpServer[],
+  skills: Skill[],
 ): Promise<Record<string, string>> {
   const repoName = rootPackage.name ?? basename(target) ?? "TODO_REPO_NAME";
   const repoDescription = rootPackage.description ?? "TODO: describe what this repository builds and who uses it.";
@@ -152,8 +216,34 @@ async function buildContext(
     safetyRules,
     artifactRules,
     detectedConfigs,
+    mcpServers: formatMcp(mcpServers),
+    skills: formatSkills(skills),
     generatedDate: new Date().toISOString().slice(0, 10),
   };
+}
+
+function formatMcp(servers: McpServer[]): string {
+  if (servers.length === 0) {
+    return "- TODO: no MCP config detected (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`). List servers agents may use here.";
+  }
+  const groups = new Map<string, McpServer[]>();
+  for (const server of servers) groups.set(server.file, [...(groups.get(server.file) ?? []), server]);
+  return [...groups]
+    .map(([file, group]) => [`Configured in \`${file}\`:`, "", ...group.map(formatMcpServer)].join("\n"))
+    .join("\n\n");
+}
+
+function formatMcpServer(server: McpServer): string {
+  if (server.transport === "stdio") return `- \`${server.name}\` - stdio (\`${server.command}\`).`;
+  if (server.transport === "unknown") return `- \`${server.name}\` - transport not recognized; see \`${server.file}\`.`;
+  return `- \`${server.name}\` - ${server.transport}.`;
+}
+
+function formatSkills(skills: Skill[]): string {
+  if (skills.length === 0) {
+    return "- TODO: no skills detected (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`). List skills agents should use here.";
+  }
+  return skills.map((skill) => `- \`${skill.name}\` (\`${skill.path}\`) - ${skill.description}`).join("\n");
 }
 
 function formatToolchain(mise: MiseInfo | null): string {

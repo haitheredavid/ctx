@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { applyPreset, listPresets, type Preset } from "./presets.ts";
-import { scaffold } from "./scaffold.ts";
+import { type ScaffoldOptions, scaffold } from "./scaffold.ts";
 
 const USAGE = `Usage: ctx <command> [options]
 
@@ -14,6 +14,7 @@ Commands:
   scaffold [repo] [options]    Generate agent context from repo metadata. Default repo is current directory.
     --write                    Write files. Default is dry-run.
     --force                    Overwrite existing files.
+    --preset <name>            Use a preset's stack docs; repo commands replace preset commands when it has mise.toml.
     --agent-shim               Also generate AGENT.md as a compatibility shim.
     --package-overlays         Generate AGENTS.md inside detected workspace packages.
   help                         Show this help.
@@ -54,6 +55,7 @@ async function main(argv: string[]): Promise<void> {
         force: values.force ?? false,
         agentShim: values["agent-shim"] ?? false,
         packageOverlays: values["package-overlays"] ?? false,
+        preset: values.preset,
       });
     default:
       console.error(`error: unknown command '${command}'`);
@@ -105,12 +107,10 @@ async function pickPreset(presets: Preset[]): Promise<string> {
   }
 }
 
-async function runScaffold(
-  repo: string | undefined,
-  opts: { write: boolean; force: boolean; agentShim: boolean; packageOverlays: boolean },
-): Promise<void> {
+async function runScaffold(repo: string | undefined, opts: Omit<ScaffoldOptions, "target">): Promise<void> {
   const target = resolve(process.cwd(), repo ?? ".");
-  console.log(`${opts.write ? "write" : "dry-run"}: ${target}`);
+  const presetNote = opts.preset ? ` (preset ${opts.preset})` : "";
+  console.log(`${opts.write ? "write" : "dry-run"}: ${target}${presetNote}`);
   const results = await scaffold({ target, ...opts });
   for (const result of results) {
     if (result.action === "skip") console.log(`skip exists: ${result.relPath}`);
