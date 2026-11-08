@@ -1,16 +1,16 @@
 # ctx
 
-Personal agent-readable repo context: ten stack-tailored presets (`AGENTS.md`, `.context/`, a mise-based devcontainer, and a `mise.toml` with pinned tools and tasks) plus a scaffolder that infers the same structure for existing repos. Everything runs through one Bun + TypeScript CLI, `ctx`, executed straight from this checkout.
+Personal agent-readable repo context: ten stack-tailored presets (`AGENTS.md`, `.context/`, mise-based devcontainer, `mise.toml` with pinned tools + tasks) plus scaffolder that infers same structure for existing repos. All runs through one Bun + TypeScript CLI, `ctx`, executed direct from this checkout.
 
 ## Setup
 
-Requires [mise](https://mise.jdx.dev).
+Needs [mise](https://mise.jdx.dev).
 
 ```bash
 mise trust && mise run setup
 ```
 
-This installs the pinned toolchain and dev deps, installs git hooks via hk, and symlinks `bin/ctx` into `~/.local/bin` (make sure that is on your `PATH`).
+Installs pinned toolchain + dev deps, git hooks via hk, symlinks `bin/ctx` into `~/.local/bin` (must be on `PATH`).
 
 ## Usage
 
@@ -20,7 +20,7 @@ ctx new ~/projects/foo --preset api-ts       # copy a preset (omit --preset to p
 ctx new ~/projects/foo --preset api-ts --force   # overwrite existing files
 ```
 
-`ctx new` refuses to overwrite anything without `--force` and writes nothing on conflict. Afterwards:
+`ctx new` won't overwrite without `--force`; writes nothing on conflict. After:
 
 ```bash
 cd ~/projects/foo
@@ -28,7 +28,7 @@ mise trust && mise install
 grep -rn TODO AGENTS.md .context/ mise.toml  # fill in markers
 ```
 
-Open in VS Code or Codespaces and "Reopen in Container" to get the preset's toolchain via mise.
+Open in VS Code or Codespaces, "Reopen in Container" → preset toolchain via mise.
 
 ### Adding context to an existing repo
 
@@ -38,45 +38,48 @@ ctx scaffold ~/projects/bar --write              # write base files
 ctx scaffold ~/projects/bar --write --force      # overwrite existing files
 ctx scaffold ~/projects/bar --agent-shim         # also generate AGENT.md
 ctx scaffold ~/projects/bar --package-overlays   # AGENTS.md inside detected workspace packages
+ctx scaffold ~/projects/bar --preset api-ts      # preset stack docs; repo mise.toml tasks replace preset commands
 ```
 
-Reads only metadata (`package.json`, `tsconfig*.json`, `mise.toml`, common config files, workspace manifests). When a `mise.toml` exists, its tools and tasks become the generated Toolchain and Commands sections. Skips existing files unless `--force`. Leaves `TODO:` markers where it can't infer. Does not read `.env`, `.secrets`, certs, or provider payloads.
+Reads metadata only (`package.json`, `tsconfig*.json`, `mise.toml`, common config files, workspace manifests). If `mise.toml` exists, its tools + tasks become generated Toolchain and Commands sections. MCP servers (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`) and skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`) fill the `## MCP Servers` and `## Skills` sections; only server name, transport, and command basename are emitted, never args, env, headers, or URLs. Skips existing files unless `--force`. Leaves `TODO:` markers where can't infer. Never reads `.env`, `.secrets`, certs, provider payloads.
+
+With `--preset <name>`, scaffold plans the preset's files instead of the generic templates. When the repo has its own `mise.toml`, the preset's Commands sections are replaced with the repo's detected tasks and the preset `mise.toml` is never planned (even with `--force`); otherwise preset commands and `mise.toml` are kept as-is.
 
 ## Presets
 
 | Variant | Pick when |
 |---|---|
-| `frontend-ts` | React + Vite + Tailwind SPA. No backend in this repo (or backend lives separately). |
+| `frontend-ts` | React + Vite + Tailwind SPA. No backend here (or backend separate). |
 | `backend-ts` | Node + Hono + Drizzle + Postgres service. Optional SQS/Redis worker section. |
-| `fullstack-ts` | One repo, `src/{client,server,shared}`, React + Hono with shared Zod contracts. |
+| `fullstack-ts` | One repo, `src/{client,server,shared}`, React + Hono, shared Zod contracts. |
 | `python` | `uv` + `ruff` + `ty` + `pytest`. `pydantic-settings` entry, `@dataclass` internal, `pydantic` at boundaries. |
-| `combo-ts-python` | React + Vite frontend (`web/`) and FastAPI backend (`api/`) with OpenAPI-generated TS client. |
-| `api-ts` | Node + Hono + Zod HTTP API. No DB layer assumed — storage and queues sit behind external adapters. |
+| `combo-ts-python` | React + Vite frontend (`web/`) + FastAPI backend (`api/`), OpenAPI-generated TS client. |
+| `api-ts` | Node + Hono + Zod HTTP API. No DB layer assumed — storage + queues behind external adapters. |
 | `api-py` | Python + FastAPI + Pydantic HTTP API. Async, `httpx` outbound, OpenAPI authoritative. No DB layer assumed. |
-| `library-ts` | Published TS package or developer CLI tool. ESM, `tsc`-only, runtime-neutral, Changesets, optional `bin`. |
-| `library-py` | Published Python package or developer CLI tool. `uv` + `ruff` + `ty` + `pytest` + `hatchling`, `py.typed` shipped, optional `[project.scripts]`. |
+| `library-ts` | Published TS package or dev CLI tool. ESM, `tsc`-only, runtime-neutral, Changesets, optional `bin`. |
+| `library-py` | Published Python package or dev CLI tool. `uv` + `ruff` + `ty` + `pytest` + `hatchling`, ships `py.typed`, optional `[project.scripts]`. |
 | `data-py` | Python data pipelines: `uv` + `ruff` + `ty` + `pytest`, ingest→transform→publish, idempotent partitioned writes. Optional Databricks (DABs, Lakeflow/DLT, Unity Catalog) and dbt + SQL warehouse sections. |
 
-Each preset drops these files:
+Each preset drops:
 
 - `AGENTS.md` — canonical entrypoint. Compact, operational. Stack, commands, standards, ownership map.
-- `.context/README.md` — conventions for `.context/`: durable guides vs. ephemeral `active/` docs.
+- `.context/README.md` — `.context/` conventions: durable guides vs. ephemeral `active/` docs.
 - `.context/project-context.md` — purpose, architecture, ownership, durable decisions.
 - `.context/engineering-guide.md` — commands, language standards, framework patterns, testing, safety, commits.
-- `.context/writing-tdds.md` — how to write a Technical Design Document for the repo.
-- `.context/active/` — dated in-flight design docs (`YYYYMMDD-<title>.md`); the PR that lands the work deletes the doc. Guides never carry progress.
-- `.devcontainer/devcontainer.json` — VS Code / Codespaces dev environment for that stack.
-- `mise.toml` — pinned toolchain (Node + pnpm, Python + uv, or both) and task entrypoints matching the documented commands.
+- `.context/writing-tdds.md` — how to write Technical Design Document for repo.
+- `.context/active/` — dated in-flight design docs (`YYYYMMDD-<title>.md`); PR landing work deletes doc. Guides never carry progress.
+- `.devcontainer/devcontainer.json` — VS Code / Codespaces dev env for stack.
+- `mise.toml` — pinned toolchain (Node + pnpm, Python + uv, or both) + task entrypoints matching documented commands.
 
-`.context/` uses a two-tier lifecycle: durable **guides** at the root never describe progress, and ephemeral **active docs** carry in-flight design and are deleted when their work lands. See `.context/README.md` in any preset.
+`.context/` two-tier lifecycle: durable **guides** at root never describe progress; ephemeral **active docs** carry in-flight design, deleted when work lands. See `.context/README.md` in any preset.
 
-`AGENTS.md` is the canonical name. Some tools expect singular `AGENT.md` — generate it as a shim (`ctx scaffold --agent-shim`), not the source of truth.
+`AGENTS.md` = canonical name. Some tools expect singular `AGENT.md` — generate as shim (`ctx scaffold --agent-shim`), not source of truth.
 
 ## Development
 
-All tasks live in `mise.toml`:
+All tasks in `mise.toml`:
 
-- `mise run setup` - install deps, git hooks, and the `ctx` symlink.
+- `mise run setup` - install deps, git hooks, `ctx` symlink.
 - `mise run lint` - hk checks (Biome, shellcheck, whitespace).
 - `mise run format` - apply hk fixes.
 - `mise run typecheck` - `tsc --noEmit`.

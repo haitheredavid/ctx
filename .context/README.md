@@ -1,29 +1,29 @@
 # .context Conventions
 
-This folder holds agent-facing context. It contains two kinds of files with different lifecycles. Do not mix them.
+Folder holds agent-facing context. Two file kinds, different lifecycles. Don't mix.
 
 ## Guides (this folder's root)
 
-Durable reference for working in the repo: tooling, commands, architecture, conventions, and repo workflows.
+Durable repo reference: tooling, commands, architecture, conventions, repo workflows.
 
-- Guides never describe development progress. No roadmaps, feature status, "current state" snapshots, or deferred-work lists.
-- If a guide needs to mention in-flight work, that content belongs in an active doc instead.
-- Durable decisions — the "why" behind an architecture or tooling choice — live in `project-context.md`, not in a separate progress log.
+- Guides never describe dev progress. No roadmaps, feature status, "current state" snapshots, deferred-work lists.
+- Guide needs to mention in-flight work → put it in active doc instead.
+- Durable decisions (the "why" behind architecture/tooling choice) live in `project-context.md`, not separate progress log.
 
 Current guides:
 
 - `project-context.md` - product purpose, architecture, ownership, durable decisions.
 - `engineering-guide.md` - commands, code style, testing patterns, safety rules, integration caveats.
-- `writing-tdds.md` - how to write a Technical Design Document for this repo.
+- `writing-tdds.md` - how to write Technical Design Document for this repo.
 
 ## Active docs (`active/`)
 
-Ephemeral implementation documents: TDDs, design docs, migration plans, findings.
+Ephemeral implementation docs: TDDs, design docs, migration plans, findings.
 
-- File name format: `YYYYMMDD-<doc-title>.md`. The date is the day the doc was created.
-- An active doc lives only as long as its implementation. The PR that completes the work deletes the doc. Never leave a finished doc behind.
-- An old date is a signal to delete or re-validate the doc, never to trust it.
+- File name format: `YYYYMMDD-<doc-title>.md`. Date = doc creation day.
+- Active doc lives only as long as its implementation. PR completing work deletes doc. Never leave finished doc behind.
+- Old date = signal to delete or re-validate doc, never trust it.
 
 ## Not the same as root scratch
 
-`active/` docs are committed, human-reviewed design docs. They are distinct from the transient root scratch files (`PLAN.md`, `TODO.md`, `NOTES.md`, `SCRATCH.md`) described under "Local Agent Scratch" in `engineering-guide.md` — those are one-session, gitignored, and never durable. Do not conflate the two.
+`active/` docs = committed, human-reviewed design docs. Distinct from transient root scratch files (`PLAN.md`, `TODO.md`, `NOTES.md`, `SCRATCH.md`) described under "Local Agent Scratch" in `engineering-guide.md` — those are one-session, gitignored, never durable. Don't conflate.
