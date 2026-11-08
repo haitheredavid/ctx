@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+BUN="$(mise -C "$ROOT" which bun)"
+exec "$BUN" "$ROOT/src/cli.ts" "$@"

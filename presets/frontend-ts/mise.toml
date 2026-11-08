@@ -1,0 +1,36 @@
+# Toolchain + task entrypoints. First run: mise trust && mise install && mise run install.
+[tools]
+node = "26"
+pnpm = "12"
+
+[tasks.install]
+description = "pnpm install"
+run = "pnpm install"
+
+[tasks.dev]
+description = "Vite dev server with HMR"
+run = "pnpm run dev"
+
+[tasks.typecheck]
+description = "tsc --noEmit"
+run = "pnpm run typecheck"
+
+[tasks.lint]
+description = "ESLint or Biome"
+run = "pnpm run lint"
+
+[tasks.build]
+description = "production build to dist/"
+run = "pnpm run build"
+
+[tasks.preview]
+description = "serve built bundle"
+run = "pnpm run preview"
+
+[tasks.test]
+description = "Vitest (component + unit)"
+run = "pnpm run test"
+
+[tasks.check]
+description = "typecheck + lint + test"
+depends = ["typecheck", "lint", "test"]

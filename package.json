@@ -1,0 +1,11 @@
+{
+  "name": "ctx",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal agent-context presets and scaffolder.",
+  "devDependencies": {
+    "@types/bun": "^1.4",
+    "typescript": "^7"
+  }
+}

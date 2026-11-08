@@ -1,0 +1,8 @@
+{
+  "name": "ctx",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": { "ghcr.io/devcontainers-extra/features/mise:1": {} },
+  "postCreateCommand": "mise trust && mise install && bun install",
+  "customizations": { "vscode": { "extensions": ["hverlin.mise-vscode", "biomejs.biome"] } },
+  "remoteUser": "vscode"
+}

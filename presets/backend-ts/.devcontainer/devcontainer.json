@@ -1,0 +1,13 @@
+{
+  "name": "backend-ts",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": { "ghcr.io/devcontainers-extra/features/mise:1": {} },
+  "postCreateCommand": "mise trust && mise install",
+  "forwardPorts": [3000, 5432, 6379],
+  "customizations": {
+    "vscode": {
+      "extensions": ["hverlin.mise-vscode", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+    }
+  },
+  "remoteUser": "vscode"
+}

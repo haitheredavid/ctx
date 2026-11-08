@@ -1,0 +1,32 @@
+# Toolchain + task entrypoints. First run: mise trust && mise install && mise run install.
+[tools]
+python = "3.14"
+uv = "0.13"
+
+[tasks.install]
+description = "install/update from uv.lock"
+run = "uv sync"
+
+[tasks.run]
+description = "run app entry"
+run = "uv run python -m TODO_PKG"
+
+[tasks.test]
+description = "tests"
+run = "uv run pytest"
+
+[tasks.lint]
+description = "lint"
+run = "uv run ruff check ."
+
+[tasks.format]
+description = "format"
+run = "uv run ruff format ."
+
+[tasks.typecheck]
+description = "static type check"
+run = "uv run ty check"
+
+[tasks.check]
+description = "lint + typecheck + test"
+depends = ["lint", "typecheck", "test"]

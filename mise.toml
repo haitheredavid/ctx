@@ -1,0 +1,42 @@
+# Toolchain and task entrypoints for ctx itself. First run: `mise trust && mise run setup`.
+[tools]
+bun = "1.4"
+biome = "2.6"
+hk = "2.11"
+shellcheck = "0.11"
+
+[tasks.install]
+description = "Install dev dependencies"
+run = "bun install"
+
+[tasks.hooks]
+description = "Install git hooks via hk (launched through mise)"
+run = "hk install --mise"
+
+[tasks.link]
+description = "Symlink bin/ctx into ~/.local/bin"
+run = "mkdir -p ~/.local/bin && ln -sf '{{config_root}}/bin/ctx' ~/.local/bin/ctx"
+
+[tasks.setup]
+description = "install + hooks + link"
+depends = ["install", "hooks", "link"]
+
+[tasks.lint]
+description = "Run all hk checks (biome, shellcheck, whitespace) on every file"
+run = "hk check --all"
+
+[tasks.format]
+description = "Apply all hk fixes on every file"
+run = "hk fix --all"
+
+[tasks.typecheck]
+description = "tsc --noEmit"
+run = "bun x tsc --noEmit"
+
+[tasks.test]
+description = "bun test"
+run = "bun test"
+
+[tasks.check]
+description = "lint + typecheck + test"
+depends = ["lint", "typecheck", "test"]

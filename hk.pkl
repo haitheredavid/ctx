@@ -1,0 +1,9 @@
+amends "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Builtins.pkl"
+
+steps {
+  ["biome"] = Builtins.biome
+  ["shellcheck"] { glob = List("bin/ctx"); check = "shellcheck {{files}}" }
+  ["trailing_whitespace"] = Builtins.trailing_whitespace
+  ["newlines"] = Builtins.newlines
+}

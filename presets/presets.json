@@ -1,0 +1,12 @@
+{
+  "api-py": "Python + FastAPI + Pydantic HTTP API. Async, httpx outbound, OpenAPI authoritative. No DB layer assumed.",
+  "api-ts": "Node + Hono + Zod HTTP API. No DB layer assumed; storage and queues behind external adapters.",
+  "backend-ts": "Node + Hono + Drizzle + Postgres service. Optional SQS/Redis worker section.",
+  "combo-ts-python": "React + Vite frontend (web/) and FastAPI backend (api/) with OpenAPI-generated TS client.",
+  "data-py": "Python data pipelines: ingest->transform->publish. Optional Databricks and dbt sections.",
+  "frontend-ts": "React + Vite + Tailwind SPA. No backend in this repo.",
+  "fullstack-ts": "One repo, src/{client,server,shared}, React + Hono with shared Zod contracts.",
+  "library-py": "Published Python package or CLI. uv + ruff + ty + pytest + hatchling.",
+  "library-ts": "Published TS package or CLI. ESM, tsc-only, Changesets, optional bin.",
+  "python": "uv + ruff + ty + pytest. pydantic-settings entry, dataclasses internal, pydantic at boundaries."
+}

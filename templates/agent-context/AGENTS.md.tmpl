@@ -1,0 +1,69 @@
+# Agent Guide
+
+## Project Context
+
+{{repoName}}: {{repoDescription}}
+
+Additional durable context lives in `.context/` (conventions in `.context/README.md`):
+
+- `.context/project-context.md` - product purpose, architecture, ownership, and durable decisions.
+- `.context/engineering-guide.md` - commands, TypeScript style, testing patterns, boundaries, and safety rules.
+- `.context/writing-tdds.md` - how to write a Technical Design Document for this repo.
+- `.context/active/` - dated in-flight design docs (`YYYYMMDD-<title>.md`); the PR that lands the work deletes the doc. Guides never carry progress.
+
+## Repo Shape
+
+{{workspaceSummary}}
+
+{{workspaceTable}}
+
+## Toolchain
+
+{{toolchain}}
+
+## Commands
+
+Package manager: `{{packageManager}}`.
+
+{{commands}}
+
+Do not overstate command scope. If a command only runs part of the suite, say that exactly.
+
+## TypeScript Standards
+
+Detected TS config: {{tsSummary}}
+
+{{tsRules}}
+
+## Testing
+
+{{testGuidance}}
+
+## Safety
+
+{{safetyRules}}
+
+{{artifactRules}}
+
+- Use `.env.example` only for variable names when needed.
+- Do not commit real tokens, bearer headers, database URLs, DSNs, AWS secrets, or local credential values.
+- Preserve unrelated dirty work. Never revert files you did not intentionally change.
+
+Search scope, settings discipline, and commit style live in [`.context/engineering-guide.md`](.context/engineering-guide.md).
+
+## Where To Edit
+
+- Start with `.context/project-context.md` for architecture and ownership.
+- Start with `.context/engineering-guide.md` for commands, tests, style, and safety.
+- For monorepos, prefer package-local `AGENTS.md` overlays only when local ownership differs from root guidance.
+- Keep root guidance compact. Move durable detail into `.context/`.
+
+## Detected Configs
+
+{{detectedConfigs}}
+
+## Maintenance
+
+- Update this file when commands, package ownership, or safety boundaries change.
+- Record durable decisions in `.context/project-context.md`.
+- Do not use this file as a task log; track in-flight work in a dated `.context/active/` doc, issues, or PRs.

@@ -1,0 +1,21 @@
+{
+  "name": "api-py",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers-extra/features/mise:1": {}
+  },
+  "postCreateCommand": "mise trust && mise install",
+  "forwardPorts": [
+    8000
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "hverlin.mise-vscode",
+        "ms-python.python",
+        "charliermarsh.ruff"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}

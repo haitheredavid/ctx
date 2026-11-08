@@ -1,0 +1,42 @@
+Read the repo root `AGENTS.md` first; this file adds package-local guidance.
+
+# {{packageName}} Agent Guide
+
+## Purpose
+
+{{packageDescription}}
+
+TODO: State package responsibility in 1-3 sentences.
+
+## Owns
+
+- TODO: Source area, API, or behavior owned by this package.
+
+## Does Not Own
+
+- TODO: Neighbor package or integration boundary this package should not change directly.
+
+## Path Map
+
+- `{{packageDir}}` - package root.
+- TODO: Add key source paths agents should inspect first.
+
+## Commands
+
+{{packageCommands}}
+
+## Tests
+
+- TODO: Describe where tests live and what command verifies this package.
+
+## Local Rules
+
+- Keep this file as an overlay on root `AGENTS.md`; do not duplicate broad root guidance.
+- Keep ownership and boundary notes source-backed.
+- Update this file when package commands, paths, or boundaries change.
+
+## Safety
+
+- Do not read or copy `.env`, `.secrets`, local params, copied certs, bearer headers, database URLs, DSNs, AWS secrets, or local credential values.
+- Avoid generated/local artifacts unless the task explicitly requires them.
+- Preserve unrelated dirty work.

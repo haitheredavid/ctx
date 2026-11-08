@@ -1,0 +1,35 @@
+# Toolchain + task entrypoints. First run: mise trust && mise install && mise run install.
+[tools]
+python = "3.14"
+uv = "0.13"
+
+[tasks.install]
+description = "install/update from uv.lock"
+run = "uv sync"
+
+[tasks.pipeline]
+description = "run a named pipeline (TODO: confirm entry/CLI)"
+run = "uv run python -m TODO_PKG run"
+
+[tasks.test]
+description = "tests"
+run = "uv run pytest"
+
+[tasks.lint]
+description = "lint"
+run = "uv run ruff check ."
+
+[tasks.format]
+description = "format"
+run = "uv run ruff format ."
+
+[tasks.typecheck]
+description = "static type check"
+run = "uv run ty check"
+
+[tasks.check]
+description = "lint + typecheck + test"
+depends = ["lint", "typecheck", "test"]
+
+# TODO if Databricks: add databricks-cli = "latest" under [tools] and [tasks.bundle-deploy] run = "databricks bundle deploy -t <target>"
+# TODO if dbt: [tasks.dbt] run = "uv run dbt build"

@@ -1,0 +1,80 @@
+# Toolchain + task entrypoints. First run: mise trust && mise install && mise run install.
+[tools]
+node = "26"
+pnpm = "12"
+python = "3.14"
+uv = "0.13"
+
+[tasks.install]
+description = "Install api and web dependencies"
+depends = ["api:install", "web:install"]
+
+[tasks."api:install"]
+description = "uv sync"
+run = "uv sync"
+dir = "{{config_root}}/api"
+
+[tasks."api:dev"]
+description = "uv run uvicorn TODO_PKG.main:app --reload --port 8000"
+run = "uv run uvicorn TODO_PKG.main:app --reload --port 8000"
+dir = "{{config_root}}/api"
+
+[tasks."api:test"]
+description = "uv run pytest"
+run = "uv run pytest"
+dir = "{{config_root}}/api"
+
+[tasks."api:lint"]
+description = "uv run ruff check ."
+run = "uv run ruff check ."
+dir = "{{config_root}}/api"
+
+[tasks."api:typecheck"]
+description = "uv run ty check"
+run = "uv run ty check"
+dir = "{{config_root}}/api"
+
+[tasks."api:openapi"]
+description = "Emit contract artifact to ../shared/openapi.json"
+run = "uv run python -m TODO_PKG.scripts.emit_openapi > ../shared/openapi.json"
+dir = "{{config_root}}/api"
+
+[tasks."web:install"]
+description = "pnpm install"
+run = "pnpm install"
+dir = "{{config_root}}/web"
+
+[tasks."web:dev"]
+description = "vite, proxies /api -> http://localhost:8000"
+run = "pnpm run dev"
+dir = "{{config_root}}/web"
+
+[tasks."web:gen-api"]
+description = "openapi-typescript ../shared/openapi.json -> src/api-client/types.ts"
+run = "pnpm run gen:api"
+dir = "{{config_root}}/web"
+depends = ["api:openapi"]
+
+[tasks."web:typecheck"]
+description = "pnpm run typecheck"
+run = "pnpm run typecheck"
+dir = "{{config_root}}/web"
+
+[tasks."web:lint"]
+description = "pnpm run lint"
+run = "pnpm run lint"
+dir = "{{config_root}}/web"
+
+[tasks."web:build"]
+description = "pnpm run build"
+run = "pnpm run build"
+dir = "{{config_root}}/web"
+
+[tasks."web:test"]
+description = "pnpm run test"
+run = "pnpm run test"
+dir = "{{config_root}}/web"
+
+[tasks.check]
+description = "api lint/typecheck/test + web typecheck/lint/test"
+depends = ["api:lint", "api:typecheck", "api:test", "web:typecheck", "web:lint", "web:test"]

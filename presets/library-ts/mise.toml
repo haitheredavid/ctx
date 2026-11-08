@@ -1,0 +1,40 @@
+# Toolchain + task entrypoints. First run: mise trust && mise install && mise run install.
+[tools]
+node = "26"
+pnpm = "12"
+
+[tasks.install]
+description = "pnpm install"
+run = "pnpm install"
+
+[tasks.typecheck]
+description = "tsc --noEmit"
+run = "pnpm run typecheck"
+
+[tasks.lint]
+description = "Biome or ESLint"
+run = "pnpm run lint"
+
+[tasks.build]
+description = "tsc -p tsconfig.build.json → dist/"
+run = "pnpm run build"
+
+[tasks.test]
+description = "Vitest"
+run = "pnpm run test"
+
+[tasks.changeset]
+description = "Record an upcoming user-facing change"
+run = "pnpm run changeset"
+
+[tasks.version]
+description = "changeset version (bumps + CHANGELOG)"
+run = "pnpm run version"
+
+[tasks.release]
+description = "build && changeset publish"
+run = "pnpm run release"
+
+[tasks.check]
+description = "typecheck + lint + test"
+depends = ["typecheck", "lint", "test"]
