@@ -253,4 +253,4 @@ SCRATCH.md
 - Update `Commands` when `pyproject.toml` scripts change.
 - Update `.context/project-context.md` when architecture, integrations, or ownership shift.
 - Record warehouse, orchestrator, dataframe library, validation tool, stage convention, and dbt-vs-Python transform ownership in `.context/project-context.md`.
-- In-flight design docs live in `.context/active/` as `YYYYMMDD-<title>.md`; the PR that lands the work deletes the doc.
+- In-flight specs, DDs, and TDDs live in `.context/active/`; see `.context/writing-specs.md#lifecycle` for naming and lifecycle.

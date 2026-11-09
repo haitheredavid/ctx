@@ -209,4 +209,4 @@ SCRATCH.md
 - Update `.context/project-context.md` when architecture, integrations, or ownership shift.
 - Every API model change triggers contract regen. If you change `models/` without committing the new `openapi.json` and `types.ts`, the contract drifts silently - treat that as a bug.
 - Record durable cross-language decisions (deploy topology, auth scheme, error envelope, pagination model) in `.context/project-context.md`.
-- In-flight design docs live in `.context/active/` as `YYYYMMDD-<title>.md`; the PR that lands the work deletes the doc.
+- In-flight specs, DDs, and TDDs live in `.context/active/`; see `.context/writing-specs.md#lifecycle` for naming and lifecycle.

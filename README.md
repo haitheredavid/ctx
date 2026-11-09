@@ -43,6 +43,8 @@ ctx scaffold ~/projects/bar --preset api-ts      # preset stack docs; repo mise.
 
 Reads metadata only (`package.json`, `tsconfig*.json`, `mise.toml`, common config files, workspace manifests). If `mise.toml` exists, its tools + tasks become generated Toolchain and Commands sections. MCP servers (`.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, `.codex/config.toml`) and skills (`.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`) fill the `## MCP Servers` and `## Skills` sections; only server name, transport, and program name (first token of `command`, directories stripped) are emitted, never args, env, headers, or URLs. Generated command lists show mise task descriptions and package script names, never command bodies. `scaffold` requires an existing directory. Skips existing files unless `--force`. Leaves `TODO:` markers where can't infer. Never reads `.env`, `.secrets`, certs, provider payloads.
 
+Base files (generic path): `AGENTS.md`, `.context/project-context.md`, `.context/engineering-guide.md`, `.context/writing-specs.md`, `.context/writing-dds.md`, `.context/writing-tdds.md`, `.context/README.md`, `.context/active/.gitkeep`.
+
 With `--preset <name>`, scaffold plans the preset's files instead of the generic templates. When the repo has its own `mise.toml`/`.mise.toml`, preset Commands sections are replaced with the repo's detected commands (mise tasks, else package scripts) and the preset's `mise.toml` is not written, even with `--force`; otherwise preset commands and `mise.toml` are kept as-is.
 
 ## Presets
@@ -63,11 +65,13 @@ With `--preset <name>`, scaffold plans the preset's files instead of the generic
 Each preset drops:
 
 - `AGENTS.md` — canonical entrypoint. Compact, operational. Stack, commands, standards, ownership map.
-- `.context/README.md` — `.context/` conventions: durable guides vs. ephemeral `active/` docs.
 - `.context/project-context.md` — purpose, architecture, ownership, durable decisions.
 - `.context/engineering-guide.md` — commands, language standards, framework patterns, testing, safety, commits.
-- `.context/writing-tdds.md` — how to write Technical Design Document for repo.
-- `.context/active/` — dated in-flight design docs (`YYYYMMDD-<title>.md`); PR landing work deletes doc. Guides never carry progress.
+- `.context/writing-specs.md` — how to write a spec (what and why) and the spec -> DD -> TDD flow.
+- `.context/writing-dds.md` — how to write a design document (DD) that splits work into TDDs.
+- `.context/writing-tdds.md` — how to write a Technical Design Document (TDD) for one shippable unit.
+- `.context/README.md` — `.context/` conventions: durable guides vs. ephemeral `active/` docs.
+- `.context/active/` — dated in-flight specs, DDs, TDDs; naming + lifecycle in `.context/writing-specs.md#lifecycle`. Guides never carry progress.
 - `.devcontainer/devcontainer.json` — VS Code / Codespaces dev env for stack.
 - `mise.toml` — pinned toolchain (Node + pnpm, Python + uv, or both) + task entrypoints matching documented commands.
 

@@ -1,127 +1,95 @@
 # Writing Technical Design Documents (TDDs)
 
-Instructions for any design document written in this repo.
-Read this file in full before writing a TDD, and follow it exactly.
+A TDD is reviewed by a human and implemented by a coding agent.
+It pins every decision that crosses a contract boundary and stays silent on the rest.
+Its source is one row of a DD work breakdown, or a spec when you [skip the DD](writing-specs.md#skip-the-dd).
+For file name and lifecycle, see [writing-specs.md#lifecycle](writing-specs.md#lifecycle).
 
-You are writing a Technical Design Document (TDD).
-The TDD will be reviewed by a human and then handed to a coding agent for implementation.
-Its job is to pin down every decision that crosses a contract boundary, and to stay silent on everything the implementer can decide for itself.
+## Gate 2: before you start
 
-**Placement and lifecycle:**
-Write the TDD to `.context/active/YYYYMMDD-<doc-title>.md`, dated the day you create it.
-A TDD lives only as long as its implementation.
-The PR that completes the work deletes the TDD.
-See `.context/README.md` for the active-doc lifecycle.
+Source is a DD: start only when every item holds:
 
-You are to use language in the style of Simplified Technical English:
+- [ ] The DD is accepted.
+- [ ] The DD glossary covers every term this TDD uses.
+- [ ] The work breakdown names this TDD, its scope, and its dependencies.
+- [ ] This TDD passes the sizing gate.
+- [ ] No open question in the DD `blocks` this TDD.
 
-- Active voice. The component that acts is the subject of the sentence.
-  ("The worker writes claims," not "claims are written.")
-- One instruction or fact per sentence. Keep sentences under ~20 words.
-- State behavior positively. Say what the system does before what it forbids.
-- No gerund/participle chains as nouns.
-  Prefer "extract claims" over "the extraction of claims" / "claim extraction processing."
-- Noun clusters max 3 words. Break up "source-plan-bound extraction result contract."
-- One term per concept, every time - see the glossary below. Never vary a defined term for style.
+Source is a spec (DD skipped): start only when the spec is accepted and this TDD passes the sizing gate.
 
-You are to avoid elements of style in your language - what's a virtue in prose is a defect in a TDD.
+If this TDD needs to change a DD decision, stop and amend the DD first.
 
-**Sizing gate (apply BEFORE writing):**
+## Sizing gate
+
 One TDD = one independently shippable and revertable unit of work.
-If the architecture diagram would need more than ~6 components, or the doc would need more than 3-4 sequence diagrams, or any diagram cannot be drawn in simple ASCII - the scope is too big or too low-level.
-Stop and propose a split into multiple TDDs instead of writing one.
+The scope is too big or too low-level if any of these hold:
 
-**Structure (use these sections, in order):**
+- The architecture diagram needs more than ~6 components.
+- The doc needs more than 3 sequence diagrams.
+- A diagram cannot be drawn in simple ASCII.
 
-1. **Context & Problem** - 2-4 sentences on what exists today and what's broken or missing.
+Then stop and propose a split instead of writing one TDD.
 
-2. **Goals** - bulleted, measurable where possible.
+## Structure
 
-3. **Non-Goals & Forbidden Approaches** - two explicit lists:
-   - _Non-goals_: scope this design will not address.
-   - _Forbidden approaches_: solutions the implementer must NOT use, even where they seem natural (e.g. "do not add a new index", "do not introduce a new service", "do not denormalize this table").
-     Include the common/obvious approach if it was considered and rejected.
+Use these sections, in order. Hard cap: ~250 lines.
+If a section holds nothing a reviewer would reject a PR over, write `None.`
 
-4. **Requirements** - the constraints driving the design.
-   Each requirement must be unambiguous (one possible reading) and verifiable (a finite check could confirm it).
+1. **Context** - 2-4 sentences on what exists and what is missing.
+   Link the source DD or spec and list the goal IDs served.
+   Copy glossary entries verbatim from the DD. DD skipped: write the glossary here.
+2. **Non-goals and forbidden approaches** - scope this work will not address.
+   Add forbidden approaches only to stop a specific, plausible mistake.
+3. **Requirements and invariants** - requirements `R1`, `R2`, ...; each has one reading and a finite check.
+   Invariants `I1`, `I2`, ... hold before and after the work ships.
+4. **Architecture** - container-level ASCII diagram, one sentence per component.
+   Then ASCII sequence diagrams for the flows that touch the most surface.
+5. **Data model and interfaces** - entities, relationships, access patterns; interface names and purpose.
+   Pin exact types only when a different shape would fail review.
+6. **Behavior rules** - each rule numbered `B1`, `B2`, ..., stated once in prose, then 1-3 worked examples (input -> outcome), including the ugliest edge case.
+   Examples are normative: if prose and example conflict, the example wins and you fix the doc.
+7. **Acceptance criteria** - observable checks that convert directly into tests.
+   Each cites the `G`, `R`, `I`, or `B` IDs it verifies and does not restate them.
+   For large work, group criteria into ordered milestones.
+8. **Cross-cutting concerns** - only deviations from repo conventions.
+9. **References** - patterns to imitate, one line each with a file path.
+   Alternatives considered, one line each.
+10. **Halt conditions** - every unresolved item, as `If X, stop and ask.`
+    Leave no ambient open questions.
 
-5. **Invariants** - statements that must be true before AND after this work ships (backward compatibility guarantees, data integrity rules, idempotency properties).
-   These constrain every implementation decision, including ones this doc doesn't anticipate.
+## Language
 
-6. **Proposed Architecture** - prose description supported by a C4 Container-level diagram in plain ASCII.
-   One sentence per component stating its responsibility.
+This section is the single home of style rules for specs, DDs, and TDDs.
+Each rule has at most one bad example.
 
-7. **Key Interactions** - sequence diagrams in plain ASCII for the 2-4 flows that exercise the most architectural surface.
+- One term per concept, defined in the glossary, used identically every time.
+  Bad: "page metadata" / "target page" / `PageMetadata` for one thing.
+- Active voice with a named actor as subject.
+  Bad: "Output is accepted after validation." (accepted by what?)
+- One fact per sentence, under ~20 words.
+- Use verbs, not zombie nouns.
+  Bad: "the extraction of claims" / "claim extraction processing" (write "extract claims").
+- Keep noun clusters to 3 words at most.
+  Bad: "source-plan-bound extraction result contract".
+- State behavior positively; never stack negations.
+  Bad: "Do not publish unsupported claims as supported."
+- No weak words. must = required; can = is able to; may = permitted and optional. No other modals.
+  Bad: "Show the source span when available." (available when?)
+- Keep enumerations parallel: every item at the same level of abstraction.
+- Cross-reference by ID instead of restating a rule in another section.
+- State decisions, not arguments. Write "Uses Postgres", not a comparison.
+- Bullets for enumerable facts; prose only for rationale.
+- No pseudocode, snippets, or signatures, except pinned contract types.
+- Diagrams are plain ASCII only. If it does not fit ASCII, it is too low-level.
+- Write for an engineer who knows the stack. Do not explain the framework.
+- Keep the doc self-contained. Link outside context; never summarize a chat.
 
-8. **Data Model** - entities, relationships, key access patterns.
-   Schema sketches are fine; full DDL is not.
+Editing pass: for each sentence, ask "if the implementer decided this differently, would the PR be rejected?"
+If no, cut it.
+Coverage: every listed `G` and every `R`, `I`, and `B` has at least one acceptance criterion.
 
-9. **APIs / Interfaces** - endpoint/interface names, methods, and purpose.
-   No request/response schemas or signatures UNLESS the type itself is a contract decision - i.e. if the implementer chose a different shape, the PR would be rejected.
-   Those types must be pinned here exactly.
+## Agents
 
-10. **Behavior & Domain Rules** - each business rule stated once in prose, then anchored with 1-3 concrete worked examples (inputs -> expected outcome), always including the ugliest edge case.
-    Examples are normative: if prose and example conflict, the example wins and the doc must be fixed.
-
-11. **Acceptance Criteria** - observable, contract-level checks that define "done".
-    Written so they can be turned directly into tests.
-    If the work is large, group criteria into ordered milestones; each milestone is a verification gate the implementation must pass before proceeding.
-
-12. **Cross-Cutting Concerns** - auth, observability, error handling, etc.
-    One short paragraph each, only where this design deviates from or adds to repo conventions.
-    Don't restate what AGENTS.md already covers.
-
-13. **Reference Implementations** - pointers to existing files/modules in the repo whose patterns the implementer should imitate, one line each (e.g. "error handling: follow src/handlers/x.ts").
-
-14. **Alternatives Considered** - bulleted, one line each, with the chosen option and a half-sentence on why.
-    Link an ADR if the justification needs more.
-
-15. **Halt Conditions** - anything unresolved goes here, phrased as an explicit instruction: "If implementation touches X, stop and ask before proceeding."
-    No ambient open questions; every item is either resolved before handoff or converted into a halt condition.
-
-**Style constraints:**
-
-- Avoid the `Elegant variation` antipattern:
-  Use one token per concept and use it identically every time.
-  Do not give the same concept many names, and one name for many concepts:
-  "final placement" / "final pages" / "page metadata" / PageMetadata / "planned target page metadata" / "target page metadata" / "planned page metadata" / "planned target page."
-  Each rename forces the reviewer to decide is this a new thing or the same thing?
-- Follow the `No undefined terms` rule:
-  Define terms before use in a glossary in the **Context & Problem** section.
-- Avoid the `Stacked negation` antipattern: do not negate already negative concepts:
-  "Do not publish unsupported claims as supported."
-  "Tests prove no output contains raw paths as authority."
-- Stop `Specification by prohibition` abuse:
-  "Halt Conditions", "Non-Goals & Forbidden Approaches" - these should be used only when they stop the agent from making specific mistakes or choosing valid-looking but inappropriate design decisions based on its reading of the TDD.
-  The TDD must be self-contained - don't make it a summary of a conversation that happened in chat.
-  If you need to refer to outside context, use a normative markdown link to a document.
-  Be selective, targeted and precise.
-- Avoid the `Weak words and uncalibrated modals` antipattern:
-  "Relevant contracts" (relevant by what test?).
-  "source span when available" (available when? decided by whom?)
-  "may show summarized gaps" (must|can|may|cannot are used colloquially).
-  Each requires interpretation and must be banned as a "weak phrase" that punts a hidden decision to the reader.
-- Avoid the `Nominalization and hidden actors` antipattern:
-  No abstract nouns doing actions: "Extraction," "Projection," "synthesis," "placement," "ingestion" - unqualified, these are "zombie nouns" and oppose the rule that characters should be subjects and actions should be verbs.
-  When combined with the agentless passive ("output must be accepted only through a schema-validated artifact" - accepted by what?), the reviewer cannot answer the basic spec question: which component is responsible for which behavior.
-  Compound-noun pile-ups make it worse: "extraction target set," "schema-validated artifact scoped to source id."
-- Avoid the `Redundancy across sections` antipattern:
-  The same rule restated in Goals, Requirements, Invariants, Behavior Rules, and Acceptance Criteria.
-  Because restatements drift in wording, the reviewer can't tell whether Section11 is derived from Section4 or adds new constraints, so they must diff sections against each other. That cross-checking is pure extraneous load.
-- Avoid the `non-parallel enumerations` antipattern:
-  "Gap records missing evidence, unsupported hints, ambiguous variants, and out-of-scope material" - four items at four different levels of abstraction (an absence, a hint type, a variant, a material category).
-  The reader hunts for the organizing principle and finds none, which is its own small tax repeated throughout the lists.
-- All diagrams are plain ASCII.
-  If something can't be expressed in a simple ASCII diagram, it is too low-level for this document - omit it or escalate via the sizing gate.
-- No pseudocode, no implementation snippets, no function signatures - except public contract types per section 9.
-- State technology choices as decisions, not arguments.
-  "Uses Postgres" - not three paragraphs comparing it to alternatives.
-  If a choice needs justification, write a one-line ADR pointer.
-- Hard cap: ~300 lines.
-  If a section would exceed half a page, ask whether to split it into a separate doc or ADR rather than expanding inline.
-- Write for an engineer who already knows the stack.
-  Don't explain what the framework or database is.
-- Prefer prose for design rationale; bullets for enumerable lists.
-- Editing pass before finishing: delete any sentence describing HOW to build something rather than WHAT must be true.
-  The test for inclusion: "if the implementer decided this differently, would the PR be rejected?"
-  If no, cut it.
+- Read the whole chain (spec, DD, TDD) before implementing.
+- Never edit an accepted doc, except in a PR whose description states the change. Exceptions: setting a work-breakdown status and the deletes in the lifecycle.
+- Create design docs only when asked.

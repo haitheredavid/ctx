@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { exists } from "../src/detect.ts";
-import { PRESETS_DIR, TEMPLATES_DIR } from "../src/paths.ts";
+import { CTX_ROOT, PRESETS_DIR, TEMPLATES_DIR } from "../src/paths.ts";
 
 const presetDirs = (await readdir(PRESETS_DIR, { withFileTypes: true }))
   .filter((entry) => entry.isDirectory())
@@ -14,6 +14,8 @@ const REQUIRED_FILES = [
   ".context/README.md",
   ".context/project-context.md",
   ".context/engineering-guide.md",
+  ".context/writing-specs.md",
+  ".context/writing-dds.md",
   ".context/writing-tdds.md",
   ".context/active/.gitkeep",
   ".devcontainer/devcontainer.json",
@@ -42,6 +44,15 @@ test("presets and agent-context templates are ASCII-only", async () => {
     }
   }
   expect(offenders).toEqual([]);
+});
+
+test("ctx's own design guides keep template headings", async () => {
+  for (const guide of ["writing-specs.md", "writing-dds.md", "writing-tdds.md"]) {
+    const headings = (text: string) => text.split("\n").filter((line) => line.startsWith("#"));
+    const own = await readFile(join(CTX_ROOT, ".context", guide), "utf8");
+    const template = await readFile(join(TEMPLATES_DIR, `${guide}.tmpl`), "utf8");
+    expect(headings(own)).toEqual(headings(template));
+  }
 });
 
 describe.each(presetDirs)("preset %s", (preset) => {
@@ -87,5 +98,13 @@ describe.each(presetDirs)("preset %s", (preset) => {
     expect(lines.filter((line) => line === "## Commands")).toHaveLength(1);
     const guide = (await readFile(join(PRESETS_DIR, preset, ".context", "engineering-guide.md"), "utf8")).split("\n");
     expect(guide.filter((line) => line === "## Commands")).toHaveLength(1);
+  });
+
+  test("design guides match generic templates byte-for-byte", async () => {
+    for (const guide of ["writing-specs.md", "writing-dds.md", "writing-tdds.md"]) {
+      const presetText = await readFile(join(PRESETS_DIR, preset, ".context", guide), "utf8");
+      const templateText = await readFile(join(TEMPLATES_DIR, `${guide}.tmpl`), "utf8");
+      expect(presetText).toBe(templateText);
+    }
   });
 });

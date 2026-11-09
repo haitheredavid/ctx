@@ -10,6 +10,8 @@ const BASE_FILES = [
   "AGENTS.md",
   ".context/project-context.md",
   ".context/engineering-guide.md",
+  ".context/writing-specs.md",
+  ".context/writing-dds.md",
   ".context/writing-tdds.md",
   ".context/README.md",
   ".context/active/.gitkeep",

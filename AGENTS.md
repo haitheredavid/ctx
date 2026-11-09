@@ -8,8 +8,10 @@ More durable context in `.context/` (conventions in `.context/README.md`):
 
 - `.context/project-context.md` - purpose, architecture, ownership, durable decisions.
 - `.context/engineering-guide.md` - commands, TypeScript style, template rules, testing, safety.
-- `.context/writing-tdds.md` - how to write Technical Design Document for this repo.
-- `.context/active/` - dated in-flight design docs (`YYYYMMDD-<title>.md`); PR landing the work deletes doc. Guides never carry progress.
+- `.context/writing-specs.md` - how to write a spec (what and why) and the spec -> DD -> TDD flow.
+- `.context/writing-dds.md` - how to write a design document (DD) that splits work into TDDs.
+- `.context/writing-tdds.md` - how to write a Technical Design Document (TDD) for one shippable unit.
+- `.context/active/` - dated in-flight docs (`YYYYMMDD-<title>-spec.md`, `-dd.md`, `-tdd.md`); naming + lifecycle in `.context/README.md`. Guides never carry progress.
 
 ## Repo Shape
 

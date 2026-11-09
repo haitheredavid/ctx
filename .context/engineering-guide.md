@@ -41,8 +41,8 @@ ctx scaffold ~/projects/some-monorepo --package-overlays
 - Root guide compact, operational.
 - `.context/project-context.md` holds architecture, ownership, durable decisions.
 - `.context/engineering-guide.md` holds commands, style, tests, safety.
-- `.context/writing-tdds.md` = TDD authoring guide; `.context/README.md` documents guides-vs-active split.
-- `.context/active/` holds dated in-flight design docs; PR landing the work deletes them. Guides never carry progress/status.
+- `.context/writing-specs.md`, `.context/writing-dds.md`, `.context/writing-tdds.md` = spec -> DD -> TDD authoring guides; `.context/README.md` documents guides-vs-active split.
+- `.context/active/` holds dated in-flight specs/DDs/TDDs (`YYYYMMDD-<title>-spec.md`, `-dd.md`, `-tdd.md`); lifecycle in `.context/writing-specs.md#lifecycle`. Guides never carry progress/status.
 - Package overlays say "Read root AGENTS.md first", no duplicated broad guidance.
 - Preset docs reference commands as `mise run <task>`; every such task must exist in preset's `mise.toml`.
 

@@ -6,8 +6,10 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 
 - [.context/project-context.md](.context/project-context.md) - what this app is, architecture, ownership map, integrations, durable decisions.
 - [.context/engineering-guide.md](.context/engineering-guide.md) - commands, language standards, cross-language contract rules, safety.
-- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document for this repo.
-- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` design docs (`YYYYMMDD-<title>.md`, deleted when the work lands).
+- [.context/writing-specs.md](.context/writing-specs.md) - how to write a spec (what and why) and the spec -> DD -> TDD flow.
+- [.context/writing-dds.md](.context/writing-dds.md) - how to write a design document (DD) that splits work into TDDs.
+- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document (TDD) for one shippable unit.
+- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` specs, DDs, and TDDs (naming and lifecycle in `.context/writing-specs.md#lifecycle`).
 
 ## Stack
 

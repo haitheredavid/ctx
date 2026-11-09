@@ -227,4 +227,4 @@ SCRATCH.md
 - Update `Commands` when `pyproject.toml` scripts change.
 - Update `.context/project-context.md` when the public surface or build shape shifts.
 - Record durable decisions (supported Python minors, async stance, optional extras, CLI choice) in `.context/project-context.md`.
-- In-flight design docs live in `.context/active/` as `YYYYMMDD-<title>.md`; the PR that lands the work deletes the doc.
+- In-flight specs, DDs, and TDDs live in `.context/active/`; see `.context/writing-specs.md#lifecycle` for naming and lifecycle.

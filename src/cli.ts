@@ -20,7 +20,8 @@ Commands:
     --package-overlays         Generate AGENTS.md inside detected workspace packages.
   help                         Show this help.
 
-Base files: AGENTS.md, .context/{project-context,engineering-guide,writing-tdds,README}.md,
+Base files: AGENTS.md,
+.context/{project-context,engineering-guide,writing-specs,writing-dds,writing-tdds,README}.md,
 and .context/active/ (an empty, tracked folder for dated in-flight design docs).
 With --preset: the preset's files (including .devcontainer/), plus mise.toml when the repo has no mise config.
 `;

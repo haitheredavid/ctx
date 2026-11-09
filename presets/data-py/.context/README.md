@@ -14,14 +14,15 @@ Current guides:
 
 - `project-context.md` - product purpose, architecture, ownership, durable decisions.
 - `engineering-guide.md` - commands, code style, testing patterns, safety rules, integration caveats.
-- `writing-tdds.md` - how to write a Technical Design Document for this repo.
+- `writing-specs.md` - how to write a spec (what and why) and the spec -> DD -> TDD flow.
+- `writing-dds.md` - how to write a design document (DD) that splits work into TDDs.
+- `writing-tdds.md` - how to write a Technical Design Document (TDD) for one shippable unit.
 
 ## Active docs (`active/`)
 
-Ephemeral implementation documents: TDDs, design docs, migration plans, findings.
+Ephemeral implementation documents: specs, design documents (DDs), TDDs, migration plans, findings.
 
-- File name format: `YYYYMMDD-<doc-title>.md`. The date is the day the doc was created.
-- An active doc lives only as long as its implementation. The PR that completes the work deletes the doc. Never leave a finished doc behind.
+- File naming and lifecycle: see `writing-specs.md#lifecycle`.
 - An old date is a signal to delete or re-validate the doc, never to trust it.
 
 ## Not the same as root scratch

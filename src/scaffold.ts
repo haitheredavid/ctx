@@ -111,6 +111,14 @@ async function planGenericFiles(target: string, context: Record<string, string>)
       content: render(await loadTemplate("engineering-guide.md.tmpl"), context),
     },
     {
+      path: join(target, ".context", "writing-specs.md"),
+      content: render(await loadTemplate("writing-specs.md.tmpl"), context),
+    },
+    {
+      path: join(target, ".context", "writing-dds.md"),
+      content: render(await loadTemplate("writing-dds.md.tmpl"), context),
+    },
+    {
       path: join(target, ".context", "writing-tdds.md"),
       content: render(await loadTemplate("writing-tdds.md.tmpl"), context),
     },
