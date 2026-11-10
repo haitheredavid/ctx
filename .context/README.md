@@ -28,3 +28,12 @@ Ephemeral implementation docs: specs, design docs (DDs), TDDs, migration plans, 
 ## Not the same as root scratch
 
 `active/` docs = committed, human-reviewed design docs. Distinct from transient root scratch files (`PLAN.md`, `TODO.md`, `NOTES.md`, `SCRATCH.md`) described under "Local Agent Scratch" in `engineering-guide.md` — those are one-session, gitignored, never durable. Don't conflate.
+
+## Rule markers
+
+Hard rules in root `AGENTS.md` and `.context/engineering-guide.md` use `MUST` / `MUST NOT` and end with a marker naming what enforces them:
+
+- `[check: <repo path>, ...]` - test or config that fails when the rule breaks.
+- `[check: manual]` - reviewer-enforced; candidate for a test.
+
+Soft guidance stays plain prose, no level, no marker. `test/own-docs.test.ts` fails on a `MUST` bullet without a marker, or a marker path that does not exist.

@@ -50,18 +50,22 @@ CLI:
 
 - `AGENTS.md` canonical. `AGENT.md` optional compat shim only.
 - Templates + presets stay generic, leave TODOs for unknown project-specific facts.
-- Every `mise run <task>` in preset docs must exist in that preset's `mise.toml` (enforced by `test/presets.test.ts`).
-- `ctx new` never overwrites without `--force`; writes nothing on conflict.
-- Scaffolder defaults to dry-run, skips existing files unless `--force`.
-- Detection uses repo metadata, not secret-bearing files; it parses MCP config files and `SKILL.md` frontmatter but emits only server name, transport, and a sanitized command name; never args/env/headers/URL text, script bodies, or mise `run` text.
-- Writes never follow symlinks or leave the target dir; `ctx new` rolls back on failure.
-- Templates ASCII, compact, source-backed.
+- Every `mise run <task>` in preset docs MUST exist in that preset's `mise.toml`. [check: test/presets.test.ts]
+- `ctx new` MUST NOT overwrite without `--force` and MUST write nothing on conflict. [check: test/new.test.ts]
+- Scaffolder MUST default to dry-run and MUST skip existing files unless `--force`. [check: test/scaffold.test.ts]
+- Detection MUST read repo metadata only, never secret-bearing files; it parses MCP config files and `SKILL.md` frontmatter. [check: manual]
+- Detection output MUST NOT include MCP args/env/headers/URL text, script bodies, or mise `run` text; it emits only server name, transport, and a sanitized command name. [check: test/scaffold.test.ts]
+- Writes MUST NOT follow symlinks or leave the target dir. [check: test/new.test.ts, test/scaffold.test.ts]
+- `ctx new` MUST roll back created files and dirs when a copy fails mid-write. [check: manual]
+- Templates and presets MUST be ASCII-only. [check: test/presets.test.ts]
+- Templates stay compact and source-backed.
+- Hard-rule markers (`[check: ...]`): `.context/README.md#rule-markers`.
 
 ## Safety
 
-- No reading/copying `.env`, `.secrets`, local params, copied certs, bearer headers, database URLs, DSNs, AWS secrets, local credential values.
+- MUST NOT read or copy `.env`, `.secrets`, local params, copied certs, bearer headers, database URLs, DSNs, AWS secrets, local credential values. [check: manual]
 - Scaffolder no broad source tree reads unless needed; prefer metadata files + existence checks.
-- Preserve unrelated dirty work. Never revert files not intentionally changed.
+- Preserve unrelated dirty work. MUST NOT revert files not intentionally changed. [check: manual]
 
 Search scope, settings discipline, commit style in [`.context/engineering-guide.md`](.context/engineering-guide.md).
 

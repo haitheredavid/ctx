@@ -100,8 +100,8 @@ describe.each(presetDirs)("preset %s", (preset) => {
     expect(guide.filter((line) => line === "## Commands")).toHaveLength(1);
   });
 
-  test("design guides match generic templates byte-for-byte", async () => {
-    for (const guide of ["writing-specs.md", "writing-dds.md", "writing-tdds.md"]) {
+  test("design guides and .context README match generic templates byte-for-byte", async () => {
+    for (const guide of ["README.md", "writing-specs.md", "writing-dds.md", "writing-tdds.md"]) {
       const presetText = await readFile(join(PRESETS_DIR, preset, ".context", guide), "utf8");
       const templateText = await readFile(join(TEMPLATES_DIR, `${guide}.tmpl`), "utf8");
       expect(presetText).toBe(templateText);
