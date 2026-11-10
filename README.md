@@ -52,6 +52,7 @@ With `--preset <name>`, scaffold plans the preset's files instead of the generic
 | Variant | Pick when |
 |---|---|
 | `frontend-ts` | React + Vite + Tailwind SPA. No backend here (or backend separate). |
+| `flutter` | Flutter + Dart app (iOS/Android, optional web). Riverpod + codegen, `go_router`, `freezed`/`json_serializable` via `build_runner`. |
 | `backend-ts` | Node + Hono + Drizzle + Postgres service. Optional SQS/Redis worker section. |
 | `fullstack-ts` | One repo, `src/{client,server,shared}`, React + Hono, shared Zod contracts. |
 | `python` | `uv` + `ruff` + `ty` + `pytest`. `pydantic-settings` entry, `@dataclass` internal, `pydantic` at boundaries. |
@@ -73,7 +74,7 @@ Each preset drops:
 - `.context/README.md` — `.context/` conventions: durable guides vs. ephemeral `active/` docs.
 - `.context/active/` — dated in-flight specs, DDs, TDDs; naming + lifecycle in `.context/writing-specs.md#lifecycle`. Guides never carry progress.
 - `.devcontainer/devcontainer.json` — VS Code / Codespaces dev env for stack.
-- `mise.toml` — pinned toolchain (Node + pnpm, Python + uv, or both) + task entrypoints matching documented commands.
+- `mise.toml` — pinned toolchain (Node + pnpm, Python + uv, both, or Flutter) + task entrypoints matching documented commands.
 
 `.context/` two-tier lifecycle: durable **guides** at root never describe progress; ephemeral **active docs** carry in-flight design, deleted when work lands. See `.context/README.md` in any preset.
 

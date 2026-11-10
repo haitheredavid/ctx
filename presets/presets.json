@@ -4,6 +4,7 @@
   "backend-ts": "Node + Hono + Drizzle + Postgres service. Optional SQS/Redis worker section.",
   "combo-ts-python": "React + Vite frontend (web/) and FastAPI backend (api/) with OpenAPI-generated TS client.",
   "data-py": "Python data pipelines: ingest->transform->publish. Optional Databricks and dbt sections.",
+  "flutter": "Flutter + Dart app (iOS/Android, optional web). Riverpod, go_router, freezed codegen.",
   "frontend-ts": "React + Vite + Tailwind SPA. No backend in this repo.",
   "fullstack-ts": "One repo, src/{client,server,shared}, React + Hono with shared Zod contracts.",
   "library-py": "Published Python package or CLI. uv + ruff + ty + pytest + hatchling.",

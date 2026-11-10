@@ -1,0 +1,58 @@
+# Toolchain + task entrypoints. First run: mise trust && mise install && mise run install.
+[tools]
+flutter = "3.47"
+
+[tasks.install]
+description = "flutter pub get"
+run = "flutter pub get"
+
+[tasks.codegen]
+description = "build_runner: freezed, json_serializable, riverpod_generator"
+run = "dart run build_runner build"
+
+[tasks."codegen:watch"]
+description = "build_runner in watch mode"
+run = "dart run build_runner watch"
+
+[tasks.dev]
+description = "flutter run with hot reload (env from env.json)"
+run = "flutter run --dart-define-from-file=env.json"
+
+[tasks.format]
+description = "dart format (writes)"
+run = "dart format ."
+
+[tasks."format:check"]
+description = "dart format, fail on diff"
+run = "dart format --output=none --set-exit-if-changed ."
+
+[tasks.analyze]
+description = "flutter analyze: static types + lints"
+depends = ["codegen"]
+run = "flutter analyze"
+
+[tasks.test]
+description = "flutter test: unit + widget tests"
+depends = ["codegen"]
+run = "flutter test"
+
+[tasks."test:integration"]
+description = "integration_test on a connected device or emulator"
+depends = ["codegen"]
+run = "flutter test integration_test"
+
+[tasks."build:android"]
+description = "release app bundle to build/app/outputs/"
+run = "flutter build appbundle --dart-define-from-file=env.json"
+
+[tasks."build:ios"]
+description = "release ipa to build/ios/ipa/ (macOS + Xcode only)"
+run = "flutter build ipa --dart-define-from-file=env.json"
+
+[tasks."build:web"]
+description = "release web bundle to build/web/"
+run = "flutter build web --dart-define-from-file=env.json"
+
+[tasks.check]
+description = "format:check + analyze + test"
+depends = ["format:check", "analyze", "test"]
