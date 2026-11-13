@@ -7,14 +7,17 @@ import { PRESETS_DIR } from "../src/paths.ts";
 import { type ScaffoldOptions, type ScaffoldResult, scaffold } from "../src/scaffold.ts";
 
 const BASE_FILES = [
-  "AGENTS.md",
-  ".context/project-context.md",
-  ".context/engineering-guide.md",
-  ".context/writing-specs.md",
-  ".context/writing-dds.md",
-  ".context/writing-tdds.md",
   ".context/README.md",
   ".context/active/.gitkeep",
+  ".context/guides/context-maintenance.md",
+  ".context/guides/doc-lifecycle.md",
+  ".context/guides/engineering.md",
+  ".context/guides/pull-requests.md",
+  ".context/guides/writing-briefs.md",
+  ".context/guides/writing-designs.md",
+  ".context/guides/writing-specs.md",
+  ".context/project-context.md",
+  "AGENTS.md",
 ];
 
 const MISE_TOML = `[tools]
@@ -47,6 +50,7 @@ function opts(overrides: Partial<ScaffoldOptions> = {}): ScaffoldOptions {
     agentShim: false,
     claudeShim: false,
     packageOverlays: false,
+    profile: "local",
     ...overrides,
   };
 }
@@ -211,7 +215,7 @@ test("preset with repo mise.toml uses repo commands and skips preset mise.toml",
   expect(content).not.toContain("mise run openapi:export");
   expect(content).not.toContain("- TODO: list MCP servers");
 
-  const guide = contentOf(results, ".context/engineering-guide.md");
+  const guide = contentOf(results, ".context/guides/engineering.md");
   expect(guide).toContain("`mise run test` - Run tests.");
   expect(guide).not.toContain("openapi:export");
   expect(await exists(join(tmp, "AGENTS.md"))).toBe(false);
@@ -317,7 +321,7 @@ test("preset with repo mise.toml never touches it, even with force, and keeps pr
   expect(results.map((r) => r.relPath)).not.toContain("mise.toml");
   expect(await readFile(join(tmp, "mise.toml"), "utf8")).toBe(MISE_TOML);
 
-  for (const rel of ["AGENTS.md", ".context/engineering-guide.md"]) {
+  for (const rel of ["AGENTS.md", ".context/guides/engineering.md"]) {
     const [planned, source] = [contentOf(results, rel), await readFile(join(PRESETS_DIR, "api-ts", rel), "utf8")].map(
       (text) => text.split("\n").filter((line) => line.startsWith("## ")),
     );

@@ -1,23 +1,24 @@
 import { describe, expect, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join, normalize } from "node:path";
 import { exists } from "../src/detect.ts";
-import { CTX_ROOT, PRESETS_DIR, TEMPLATES_DIR } from "../src/paths.ts";
+import { composeLayers, findLayer, layerEntries } from "../src/packs.ts";
+import { CORE_DIR, CTX_ROOT, PRESETS_DIR, PROFILES_DIR, TEMPLATES_DIR } from "../src/paths.ts";
 
 const presetDirs = (await readdir(PRESETS_DIR, { withFileTypes: true }))
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name)
   .sort();
 
+const profileDirs = (await readdir(PROFILES_DIR, { withFileTypes: true }))
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name)
+  .sort();
+
 const REQUIRED_FILES = [
   "AGENTS.md",
-  ".context/README.md",
   ".context/project-context.md",
-  ".context/engineering-guide.md",
-  ".context/writing-specs.md",
-  ".context/writing-dds.md",
-  ".context/writing-tdds.md",
-  ".context/active/.gitkeep",
+  ".context/guides/engineering.md",
   ".devcontainer/devcontainer.json",
   "mise.toml",
 ];
@@ -29,14 +30,29 @@ async function miseTasks(preset: string): Promise<Record<string, unknown>> {
   return parsed.tasks ?? {};
 }
 
+const headings = (text: string) => text.split("\n").filter((line) => line.startsWith("#"));
+
+function slug(heading: string): string {
+  return heading
+    .replace(/^#+\s*/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9 -]/g, "")
+    .replaceAll(" ", "-");
+}
+
 test("presets.json describes exactly the preset directories", async () => {
   const manifest = JSON.parse(await readFile(join(PRESETS_DIR, "presets.json"), "utf8")) as Record<string, string>;
   expect(Object.keys(manifest).sort()).toEqual(presetDirs);
 });
 
-test("presets and agent-context templates are ASCII-only", async () => {
+test("profiles.json describes exactly the profile directories", async () => {
+  const manifest = JSON.parse(await readFile(join(PROFILES_DIR, "profiles.json"), "utf8")) as Record<string, string>;
+  expect(Object.keys(manifest).sort()).toEqual(profileDirs);
+});
+
+test("presets, templates, core, and profiles are ASCII-only", async () => {
   const offenders: string[] = [];
-  for (const root of [PRESETS_DIR, TEMPLATES_DIR]) {
+  for (const root of [PRESETS_DIR, TEMPLATES_DIR, CORE_DIR, PROFILES_DIR]) {
     for (const entry of await readdir(root, { recursive: true, withFileTypes: true })) {
       if (!entry.isFile() || entry.name === ".DS_Store") continue;
       const path = join(entry.parentPath, entry.name);
@@ -46,12 +62,21 @@ test("presets and agent-context templates are ASCII-only", async () => {
   expect(offenders).toEqual([]);
 });
 
-test("ctx's own design guides keep template headings", async () => {
-  for (const guide of ["writing-specs.md", "writing-dds.md", "writing-tdds.md"]) {
-    const headings = (text: string) => text.split("\n").filter((line) => line.startsWith("#"));
-    const own = await readFile(join(CTX_ROOT, ".context", guide), "utf8");
-    const template = await readFile(join(TEMPLATES_DIR, `${guide}.tmpl`), "utf8");
-    expect(headings(own)).toEqual(headings(template));
+test("ctx's own guides keep core and local profile headings", async () => {
+  const pairs: [string, string][] = [
+    ...["writing-briefs", "writing-designs", "writing-specs", "context-maintenance", "pull-requests"].map(
+      (name): [string, string] => [
+        join(CTX_ROOT, ".context", "guides", `${name}.md`),
+        join(CORE_DIR, ".context", "guides", `${name}.md`),
+      ],
+    ),
+    [
+      join(CTX_ROOT, ".context", "guides", "doc-lifecycle.md"),
+      join(PROFILES_DIR, "local", ".context", "guides", "doc-lifecycle.md"),
+    ],
+  ];
+  for (const [own, source] of pairs) {
+    expect(headings(await readFile(own, "utf8"))).toEqual(headings(await readFile(source, "utf8")));
   }
 });
 
@@ -64,6 +89,43 @@ describe.each(presetDirs)("preset %s", (preset) => {
     expect(missing).toEqual([]);
   });
 
+  test("ships no file that core or the local profile owns", async () => {
+    const owned = new Set(
+      [...(await layerEntries(CORE_DIR)), ...(await layerEntries(join(PROFILES_DIR, "local")))].map((e) => e.rel),
+    );
+    const shadowed = (await layerEntries(join(PRESETS_DIR, preset))).map((e) => e.rel).filter((rel) => owned.has(rel));
+    expect(shadowed).toEqual([]);
+  });
+
+  test("every relative markdown link and anchor resolves in core + preset + local", async () => {
+    const entries = await composeLayers(await findLayer("preset", preset), await findLayer("profile", "local"));
+    const rels = entries.map((e) => e.rel);
+    const sources = new Map(entries.map((e) => [e.rel, e.source]));
+    const broken: string[] = [];
+    for (const { rel, source } of entries) {
+      if (!rel.endsWith(".md")) continue;
+      const text = await readFile(source, "utf8");
+      for (const match of text.matchAll(/\]\(([^)\s]+)\)/g)) {
+        const target = match[1] as string;
+        if (/^[a-z]+:/.test(target)) continue;
+        const [path = "", anchor] = target.split("#");
+        let file = rel;
+        if (path !== "") {
+          file = normalize(join(dirname(rel), path)).replace(/\/$/, "");
+          if (!rels.includes(file) && !rels.some((r) => r.startsWith(`${file}/`))) {
+            broken.push(`${preset}:${rel} -> ${target}`);
+            continue;
+          }
+        }
+        if (anchor === undefined) continue;
+        const targetSource = sources.get(file);
+        const slugs = targetSource ? headings(await readFile(targetSource, "utf8")).map(slug) : [];
+        if (!slugs.includes(anchor)) broken.push(`${preset}:${rel} -> ${target}`);
+      }
+    }
+    expect(broken).toEqual([]);
+  });
+
   test("mise.toml defines a check task", async () => {
     expect(await miseTasks(preset)).toHaveProperty("check");
   });
@@ -71,7 +133,7 @@ describe.each(presetDirs)("preset %s", (preset) => {
   test("every documented `mise run` task exists in mise.toml", async () => {
     const tasks = await miseTasks(preset);
     const undefinedTasks: string[] = [];
-    for (const doc of ["AGENTS.md", ".context/engineering-guide.md"]) {
+    for (const doc of ["AGENTS.md", ".context/guides/engineering.md"]) {
       const text = await readFile(join(PRESETS_DIR, preset, doc), "utf8");
       for (const match of text.matchAll(/mise run ([\w:-]+)/g)) {
         const name = match[1] as string;
@@ -96,15 +158,9 @@ describe.each(presetDirs)("preset %s", (preset) => {
       expect(lines.indexOf(heading)).toBeLessThan(where);
     }
     expect(lines.filter((line) => line === "## Commands")).toHaveLength(1);
-    const guide = (await readFile(join(PRESETS_DIR, preset, ".context", "engineering-guide.md"), "utf8")).split("\n");
+    const guide = (await readFile(join(PRESETS_DIR, preset, ".context", "guides", "engineering.md"), "utf8")).split(
+      "\n",
+    );
     expect(guide.filter((line) => line === "## Commands")).toHaveLength(1);
-  });
-
-  test("design guides and .context README match generic templates byte-for-byte", async () => {
-    for (const guide of ["README.md", "writing-specs.md", "writing-dds.md", "writing-tdds.md"]) {
-      const presetText = await readFile(join(PRESETS_DIR, preset, ".context", guide), "utf8");
-      const templateText = await readFile(join(TEMPLATES_DIR, `${guide}.tmpl`), "utf8");
-      expect(presetText).toBe(templateText);
-    }
   });
 });

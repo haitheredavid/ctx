@@ -202,7 +202,7 @@ function parseFrontmatter(raw: string): Record<string, string> {
   return result;
 }
 
-async function readToml(path: string): Promise<Record<string, unknown> | null> {
+export async function readToml(path: string): Promise<Record<string, unknown> | null> {
   let text: string;
   try {
     text = await readFile(path, "utf8");

@@ -5,11 +5,14 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 ## Project Context
 
 - [.context/project-context.md](.context/project-context.md) - what this service is, architecture, ownership map, integrations, durable decisions.
-- [.context/engineering-guide.md](.context/engineering-guide.md) - commands, TypeScript standards, framework patterns, safety.
-- [.context/writing-specs.md](.context/writing-specs.md) - how to write a spec (what and why) and the spec -> DD -> TDD flow.
-- [.context/writing-dds.md](.context/writing-dds.md) - how to write a design document (DD) that splits work into TDDs.
-- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document (TDD) for one shippable unit.
-- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` specs, DDs, and TDDs (naming and lifecycle in `.context/writing-specs.md#lifecycle`).
+- [.context/guides/engineering.md](.context/guides/engineering.md) - commands, TypeScript standards, framework patterns, safety.
+- [.context/guides/writing-briefs.md](.context/guides/writing-briefs.md) - the brief -> design -> spec flow and how to write a brief.
+- [.context/guides/writing-designs.md](.context/guides/writing-designs.md) - how to write a design that splits a brief into specs.
+- [.context/guides/writing-specs.md](.context/guides/writing-specs.md) - how to write a spec for one shippable unit; shared language rules.
+- [.context/guides/doc-lifecycle.md](.context/guides/doc-lifecycle.md) - where briefs, designs, specs, and other in-flight docs are drafted, reviewed, and closed.
+- [.context/guides/pull-requests.md](.context/guides/pull-requests.md) - PR branch, title, body, size, linear vs. stacked.
+- [.context/guides/context-maintenance.md](.context/guides/context-maintenance.md) - altitude rule, protected paths, context PR procedure.
+- [.context/README.md](.context/README.md) - `.context/` layout: guides, reference, archive; other files in `guides/` come from the team profile.
 
 ## Stack
 
@@ -44,9 +47,9 @@ Cite exact script scope. Do not claim a command runs every test unless `package.
 
 ## Safety
 
-Do not read `.env`, `.secrets`, certs, tokens, DSNs, cloud credentials. Full list in `.context/engineering-guide.md`. Use `.env.example` for variable names only.
+Do not read `.env`, `.secrets`, certs, tokens, DSNs, cloud credentials. Full list in `.context/guides/engineering.md`. Use `.env.example` for variable names only.
 
-Search scope, settings discipline, and commit style live in [`.context/engineering-guide.md`](.context/engineering-guide.md).
+Search scope, settings discipline, and commit style live in [`.context/guides/engineering.md`](.context/guides/engineering.md).
 
 ## MCP Servers
 

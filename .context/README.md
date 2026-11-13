@@ -1,37 +1,44 @@
 # .context Conventions
 
-Folder holds agent-facing context. Two file kinds, different lifecycles. Don't mix.
+This folder holds agent-facing context. Durable docs never describe development progress - no roadmaps, feature status, "current state" snapshots, or deferred-work lists.
 
-## Guides (this folder's root)
+## Entrypoint
 
-Durable repo reference: tooling, commands, architecture, conventions, repo workflows.
+- `project-context.md` - what this repo is, architecture, durable decisions, non-goals. Start here; it links out to the docs below.
 
-- Guides never describe dev progress. No roadmaps, feature status, "current state" snapshots, deferred-work lists.
-- Guide needs to mention in-flight work → put it in active doc instead.
-- Durable decisions (the "why" behind architecture/tooling choice) live in `project-context.md`, not separate progress log.
+## Guides (`guides/`)
 
-Current guides:
+Prescriptive standards and workflows - "how to work here". Change when a convention or process changes.
 
-- `project-context.md` - product purpose, architecture, ownership, durable decisions.
-- `engineering-guide.md` - commands, code style, testing patterns, safety rules, integration caveats.
-- `writing-specs.md` - how to write a spec (what and why) and the spec -> DD -> TDD flow.
-- `writing-dds.md` - how to write a design document (DD) that splits work into TDDs.
-- `writing-tdds.md` - how to write a Technical Design Document (TDD) for one shippable unit.
+- `guides/engineering.md` - commands, code style, testing patterns, safety rules.
+- `guides/writing-briefs.md` - the brief -> design -> spec flow and how to write a brief.
+- `guides/writing-designs.md` - how to write a design that splits a brief into specs.
+- `guides/writing-specs.md` - how to write a spec for one shippable unit; shared language rules.
+- `guides/doc-lifecycle.md` - where briefs, designs, specs, and other in-flight docs are drafted, reviewed, and closed.
+- `guides/pull-requests.md` - PR branch, title, body, size, linear vs. stacked.
+- `guides/context-maintenance.md` - altitude rule, protected paths, context PR procedure.
 
-## Active docs (`active/`)
+Any other file in `guides/` comes from the team profile; its first heading says what it covers.
 
-Ephemeral implementation docs: specs, design docs (DDs), TDDs, migration plans, findings.
+## Repo reference (`reference/`)
 
-- Naming + lifecycle: `writing-specs.md#lifecycle`.
-- Old date = signal to delete or re-validate doc, never trust it.
+Descriptive facts about this codebase - "what exists". Create it when `project-context.md` outgrows a table (ownership map, libraries, integrations). Change it when the shape of the repo changes.
 
-## Not the same as root scratch
+## Archive (`archive/`)
 
-`active/` docs = committed, human-reviewed design docs. Distinct from transient root scratch files (`PLAN.md`, `TODO.md`, `NOTES.md`, `SCRATCH.md`) described under "Local Agent Scratch" in `engineering-guide.md` — those are one-session, gitignored, never durable. Don't conflate.
+Frozen point-in-time docs. Agents never read them unless the user names a file. Nothing is added or edited.
+
+## In-flight docs
+
+Briefs, designs, specs, plans, and findings never live in guides or reference. Where they live and when they go away: `guides/doc-lifecycle.md`.
+
+## Changing these files
+
+Protected paths (`AGENTS.md`, this file, `project-context.md`, `guides/`, `reference/`) change per `guides/context-maintenance.md`.
 
 ## Rule markers
 
-Hard rules in root `AGENTS.md` and `.context/engineering-guide.md` use `MUST` / `MUST NOT` and end with a marker naming what enforces them:
+Hard rules in root `AGENTS.md` and `.context/guides/engineering.md` use `MUST` / `MUST NOT` and end with a marker naming what enforces them:
 
 - `[check: <repo path>, ...]` - test or config that fails when the rule breaks.
 - `[check: manual]` - reviewer-enforced; candidate for a test.

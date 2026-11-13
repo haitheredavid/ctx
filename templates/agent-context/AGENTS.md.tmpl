@@ -7,11 +7,14 @@
 Additional durable context lives in `.context/` (conventions in `.context/README.md`):
 
 - `.context/project-context.md` - product purpose, architecture, ownership, and durable decisions.
-- `.context/engineering-guide.md` - commands, TypeScript style, testing patterns, boundaries, and safety rules.
-- `.context/writing-specs.md` - how to write a spec (what and why) and the spec -> DD -> TDD flow.
-- `.context/writing-dds.md` - how to write a design document (DD) that splits work into TDDs.
-- `.context/writing-tdds.md` - how to write a Technical Design Document (TDD) for one shippable unit.
-- `.context/active/` - dated in-flight docs (`YYYYMMDD-<title>-spec.md`, `-dd.md`, `-tdd.md`); naming and lifecycle in `.context/README.md`. Guides never carry progress.
+- `.context/guides/engineering.md` - commands, TypeScript style, testing patterns, boundaries, and safety rules.
+- `.context/guides/writing-briefs.md` - the brief -> design -> spec flow and how to write a brief.
+- `.context/guides/writing-designs.md` - how to write a design that splits a brief into specs.
+- `.context/guides/writing-specs.md` - how to write a spec for one shippable unit; shared language rules.
+- `.context/guides/doc-lifecycle.md` - where briefs, designs, specs, and other in-flight docs are drafted, reviewed, and closed.
+- `.context/guides/pull-requests.md` - PR branch, title, body, size, linear vs. stacked.
+- `.context/guides/context-maintenance.md` - altitude rule, protected paths, context PR procedure.
+- `.context/README.md` - `.context/` layout: guides, reference, archive; other files in `guides/` come from the team profile.
 
 ## Repo Shape
 
@@ -51,7 +54,7 @@ Detected TS config: {{tsSummary}}
 - Do not commit real tokens, bearer headers, database URLs, DSNs, AWS secrets, or local credential values.
 - Preserve unrelated dirty work. Never revert files you did not intentionally change.
 
-Search scope, settings discipline, and commit style live in [`.context/engineering-guide.md`](.context/engineering-guide.md).
+Search scope, settings discipline, and commit style live in [`.context/guides/engineering.md`](.context/guides/engineering.md).
 
 ## MCP Servers
 
@@ -64,7 +67,7 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 ## Where To Edit
 
 - Start with `.context/project-context.md` for architecture and ownership.
-- Start with `.context/engineering-guide.md` for commands, tests, style, and safety.
+- Start with `.context/guides/engineering.md` for commands, tests, style, and safety.
 - For monorepos, prefer package-local `AGENTS.md` overlays only when local ownership differs from root guidance.
 - Keep root guidance compact. Move durable detail into `.context/`.
 
@@ -76,4 +79,4 @@ Search scope, settings discipline, and commit style live in [`.context/engineeri
 
 - Update this file when commands, package ownership, or safety boundaries change.
 - Record durable decisions in `.context/project-context.md`.
-- Do not use this file as a task log; track in-flight work in a dated `.context/active/` doc, issues, or PRs.
+- Do not use this file as a task log; track in-flight work per `.context/guides/doc-lifecycle.md`.

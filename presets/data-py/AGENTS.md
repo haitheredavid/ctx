@@ -5,18 +5,21 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 ## Project Context
 
 - [.context/project-context.md](.context/project-context.md) - what this codebase is, architecture, ownership map, integrations, durable decisions.
-- [.context/engineering-guide.md](.context/engineering-guide.md) - commands, Python standards, pipeline patterns, optional Databricks / dbt sections, safety.
-- [.context/writing-specs.md](.context/writing-specs.md) - how to write a spec (what and why) and the spec -> DD -> TDD flow.
-- [.context/writing-dds.md](.context/writing-dds.md) - how to write a design document (DD) that splits work into TDDs.
-- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document (TDD) for one shippable unit.
-- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` specs, DDs, and TDDs (naming and lifecycle in `.context/writing-specs.md#lifecycle`).
+- [.context/guides/engineering.md](.context/guides/engineering.md) - commands, Python standards, pipeline patterns, optional Databricks / dbt sections, safety.
+- [.context/guides/writing-briefs.md](.context/guides/writing-briefs.md) - the brief -> design -> spec flow and how to write a brief.
+- [.context/guides/writing-designs.md](.context/guides/writing-designs.md) - how to write a design that splits a brief into specs.
+- [.context/guides/writing-specs.md](.context/guides/writing-specs.md) - how to write a spec for one shippable unit; shared language rules.
+- [.context/guides/doc-lifecycle.md](.context/guides/doc-lifecycle.md) - where briefs, designs, specs, and other in-flight docs are drafted, reviewed, and closed.
+- [.context/guides/pull-requests.md](.context/guides/pull-requests.md) - PR branch, title, body, size, linear vs. stacked.
+- [.context/guides/context-maintenance.md](.context/guides/context-maintenance.md) - altitude rule, protected paths, context PR procedure.
+- [.context/README.md](.context/README.md) - `.context/` layout: guides, reference, archive; other files in `guides/` come from the team profile.
 
 ## Stack
 
-Typed Python data-pipeline repo with `uv` for dependency and environment management, `ruff` for lint/format, `ty` for static type checking, `pytest` for tests. `pydantic-settings` for env-driven configuration; `pydantic` at ingestion boundaries; `@dataclass(frozen=True, slots=True)` for internal value objects. Dataframe library TODO (pandas / polars / PySpark). Dataframe schema validation TODO (pandera / framework-native expectations / none). Warehouse TODO. Orchestrator TODO (cron / Airflow / Dagster / Databricks Jobs / dbt Cloud). If Databricks or dbt is adopted, follow the optional sections in `.context/engineering-guide.md`.
+Typed Python data-pipeline repo with `uv` for dependency and environment management, `ruff` for lint/format, `ty` for static type checking, `pytest` for tests. `pydantic-settings` for env-driven configuration; `pydantic` at ingestion boundaries; `@dataclass(frozen=True, slots=True)` for internal value objects. Dataframe library TODO (pandas / polars / PySpark). Dataframe schema validation TODO (pandera / framework-native expectations / none). Warehouse TODO. Orchestrator TODO (cron / Airflow / Dagster / Databricks Jobs / dbt Cloud). If Databricks or dbt is adopted, follow the optional sections in `.context/guides/engineering.md`.
 
-- TODO if dbt: `uv run dbt build --select <model>` (see dbt section in `.context/engineering-guide.md`).
-- TODO if Databricks: `databricks bundle validate` / `deploy -t <target>` (see Databricks section in `.context/engineering-guide.md`).
+- TODO if dbt: `uv run dbt build --select <model>` (see dbt section in `.context/guides/engineering.md`).
+- TODO if Databricks: `databricks bundle validate` / `deploy -t <target>` (see Databricks section in `.context/guides/engineering.md`).
 
 ## Commands
 
@@ -46,13 +49,13 @@ Cite exact command scope. Do not claim a command runs every test unless `pyproje
 - Pipelines are idempotent and re-runnable: re-running for the same partition produces the same result (overwrite-by-partition or merge-by-key, never blind append).
 - Validate at ingestion: external records pass through `pydantic.BaseModel` (row-level) or a dataframe schema check (TODO: tool) before entering transforms.
 - Every published dataset has an explicit partition/key strategy. Backfills run the same code with partition-range parameters - no one-off scripts.
-- Notebooks (if any) are thin wrappers over package code, never the source of truth. See `.context/engineering-guide.md`.
+- Notebooks (if any) are thin wrappers over package code, never the source of truth. See `.context/guides/engineering.md`.
 
 ## Safety
 
-Do not read `.env`, `.secrets`, certs, tokens, DSNs, cloud credentials, `profiles.yml`, `~/.databrickscfg`, or production data extracts. Full list in `.context/engineering-guide.md`. Use `.env.example` for variable names only.
+Do not read `.env`, `.secrets`, certs, tokens, DSNs, cloud credentials, `profiles.yml`, `~/.databrickscfg`, or production data extracts. Full list in `.context/guides/engineering.md`. Use `.env.example` for variable names only.
 
-Search scope, settings discipline, and commit style live in [`.context/engineering-guide.md`](.context/engineering-guide.md).
+Search scope, settings discipline, and commit style live in [`.context/guides/engineering.md`](.context/guides/engineering.md).
 
 ## MCP Servers
 

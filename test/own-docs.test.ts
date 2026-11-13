@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { exists } from "../src/detect.ts";
 import { CTX_ROOT } from "../src/paths.ts";
 
-const RULE_DOCS = ["AGENTS.md", ".context/engineering-guide.md"];
+const RULE_DOCS = ["AGENTS.md", ".context/guides/engineering.md"];
 
 test("every MUST rule in ctx's own docs names an existing check", async () => {
   const problems: string[] = [];

@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative } from "node:path";
 import {
   detectMcp,
@@ -19,8 +19,8 @@ import {
   type TsConfig,
   type WorkspaceInfo,
 } from "./detect.ts";
-import { TEMPLATES_DIR } from "./paths.ts";
-import { findPreset, type Preset, presetFiles } from "./presets.ts";
+import { composeLayers, findLayer, type Layer, type LayerEntry, layerEntries } from "./packs.ts";
+import { CORE_DIR, TEMPLATES_DIR } from "./paths.ts";
 import { assertSafeWritePath, entryExists } from "./safe-fs.ts";
 
 export type ScaffoldOptions = {
@@ -31,6 +31,7 @@ export type ScaffoldOptions = {
   claudeShim: boolean;
   packageOverlays: boolean;
   preset?: string;
+  profile: string;
 };
 
 const COMMAND_SCOPE_NOTE =
@@ -38,7 +39,7 @@ const COMMAND_SCOPE_NOTE =
 
 export type ScaffoldResult = { relPath: string; action: "create" | "overwrite" | "skip"; content: string };
 
-type PlannedFile = { path: string; content: string };
+type PlannedFile = { path: string; content: string; mode?: number };
 
 const GENERATED_ARTIFACTS = ["dist", "build", "coverage", "node_modules", ".turbo", ".next", ".vite", ".cache", "out"];
 
@@ -56,7 +57,8 @@ const SECRET_PATHS = [
 
 export async function scaffold(opts: ScaffoldOptions): Promise<ScaffoldResult[]> {
   const target = opts.target;
-  const preset = opts.preset !== undefined ? await findPreset(opts.preset) : null;
+  const preset = opts.preset !== undefined ? await findLayer("preset", opts.preset) : null;
+  const profile = await findLayer("profile", opts.profile);
   const rootPackage = (await readJson<PackageJson>(join(target, "package.json"))) ?? {};
   const tsConfig = await readFirstJson<TsConfig>(target, ["tsconfig.json", "tsconfig.base.json"]);
   const packageManager = await detectPackageManager(target, rootPackage);
@@ -75,7 +77,9 @@ export async function scaffold(opts: ScaffoldOptions): Promise<ScaffoldResult[]>
     skills,
   );
 
-  const files = preset ? await planPresetFiles(target, preset, context, mise) : await planGenericFiles(target, context);
+  const files = preset
+    ? await planPresetFiles(target, preset, profile, context, mise)
+    : await planGenericFiles(target, context, profile);
 
   if (opts.agentShim) {
     files.push({ path: join(target, "AGENT.md"), content: render(await loadTemplate("AGENT.md.tmpl"), context) });
@@ -105,55 +109,58 @@ export async function scaffold(opts: ScaffoldOptions): Promise<ScaffoldResult[]>
   return applyPlan(target, files, opts);
 }
 
-async function planGenericFiles(target: string, context: Record<string, string>): Promise<PlannedFile[]> {
-  return [
-    { path: join(target, "AGENTS.md"), content: render(await loadTemplate("AGENTS.md.tmpl"), context) },
-    {
-      path: join(target, ".context", "project-context.md"),
-      content: render(await loadTemplate("project-context.md.tmpl"), context),
-    },
-    {
-      path: join(target, ".context", "engineering-guide.md"),
-      content: render(await loadTemplate("engineering-guide.md.tmpl"), context),
-    },
-    {
-      path: join(target, ".context", "writing-specs.md"),
-      content: render(await loadTemplate("writing-specs.md.tmpl"), context),
-    },
-    {
-      path: join(target, ".context", "writing-dds.md"),
-      content: render(await loadTemplate("writing-dds.md.tmpl"), context),
-    },
-    {
-      path: join(target, ".context", "writing-tdds.md"),
-      content: render(await loadTemplate("writing-tdds.md.tmpl"), context),
-    },
-    { path: join(target, ".context", "README.md"), content: render(await loadTemplate("README.md.tmpl"), context) },
-    { path: join(target, ".context", "active", ".gitkeep"), content: "" },
+// Layers: core guides, then the rendered repo files, then the profile; later entries replace earlier ones.
+async function planGenericFiles(
+  target: string,
+  context: Record<string, string>,
+  profile: Layer,
+): Promise<PlannedFile[]> {
+  const planned = new Map<string, PlannedFile>();
+  for (const entry of await layerEntries(CORE_DIR)) planned.set(entry.rel, await plannedFromEntry(target, entry));
+  const rendered: [string, string][] = [
+    ["AGENTS.md", "AGENTS.md.tmpl"],
+    [join(".context", "project-context.md"), "project-context.md.tmpl"],
+    [join(".context", "guides", "engineering.md"), "engineering.md.tmpl"],
   ];
+  for (const [rel, template] of rendered) {
+    planned.set(rel, { path: join(target, rel), content: render(await loadTemplate(template), context) });
+  }
+  for (const entry of await layerEntries(profile.dir)) planned.set(entry.rel, await plannedFromEntry(target, entry));
+  return [...planned.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([, file]) => file);
+}
+
+// Executable layer files (profile scripts) keep their permission bits when written.
+async function plannedFromEntry(target: string, entry: LayerEntry): Promise<PlannedFile> {
+  const content = await readFile(entry.source, "utf8");
+  const { mode } = await stat(entry.source);
+  const file: PlannedFile = { path: join(target, entry.rel), content };
+  if ((mode & 0o111) !== 0) file.mode = mode & 0o777;
+  return file;
 }
 
 // With a repo mise config, its tasks are the source of truth: preset Commands sections are replaced with the
 // detected commands and the preset's mise.toml is never planned (not even with --force).
 async function planPresetFiles(
   target: string,
-  preset: Preset,
+  preset: Layer,
+  profile: Layer,
   context: Record<string, string>,
   mise: MiseInfo | null,
 ): Promise<PlannedFile[]> {
   const commandsBody = `${context.toolchain}\n\n${context.commands}\n\n${COMMAND_SCOPE_NOTE}`;
   const files: PlannedFile[] = [];
-  for (const rel of await presetFiles(preset)) {
+  for (const entry of await composeLayers(preset, profile)) {
+    const rel = entry.rel;
     if (mise && rel === "mise.toml") continue;
-    let content = await readFile(join(preset.dir, rel), "utf8");
+    const file = await plannedFromEntry(target, entry);
     if (rel === "AGENTS.md") {
-      content = replaceSection(content, "MCP Servers", context.mcpServers ?? "");
-      content = replaceSection(content, "Skills", context.skills ?? "");
+      file.content = replaceSection(file.content, "MCP Servers", context.mcpServers ?? "");
+      file.content = replaceSection(file.content, "Skills", context.skills ?? "");
     }
-    if (mise && (rel === "AGENTS.md" || rel === join(".context", "engineering-guide.md"))) {
-      content = replaceSection(content, "Commands", commandsBody);
+    if (mise && (rel === "AGENTS.md" || rel === join(".context", "guides", "engineering.md"))) {
+      file.content = replaceSection(file.content, "Commands", commandsBody);
     }
-    files.push({ path: join(target, rel), content });
+    files.push(file);
   }
   return files;
 }
@@ -187,6 +194,7 @@ async function applyPlan(target: string, files: PlannedFile[], opts: ScaffoldOpt
         encoding: "utf8",
         flag: opts.force ? "w" : "wx",
       });
+      if (file.mode !== undefined) await chmod(file.path, file.mode);
     }
     results.push({ relPath, action: existsAlready ? "overwrite" : "create", content: file.content });
   }

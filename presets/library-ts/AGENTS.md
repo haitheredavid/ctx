@@ -5,11 +5,14 @@ Canonical agent entry for this repo. Compact and operational. Deeper durable con
 ## Project Context
 
 - [.context/project-context.md](.context/project-context.md) - what this library is, public surface, ownership map, integrations, durable decisions.
-- [.context/engineering-guide.md](.context/engineering-guide.md) - commands, TypeScript standards, build, tests, release flow, safety.
-- [.context/writing-specs.md](.context/writing-specs.md) - how to write a spec (what and why) and the spec -> DD -> TDD flow.
-- [.context/writing-dds.md](.context/writing-dds.md) - how to write a design document (DD) that splits work into TDDs.
-- [.context/writing-tdds.md](.context/writing-tdds.md) - how to write a Technical Design Document (TDD) for one shippable unit.
-- [.context/README.md](.context/README.md) - `.context/` conventions: durable guides vs. ephemeral `active/` specs, DDs, and TDDs (naming and lifecycle in `.context/writing-specs.md#lifecycle`).
+- [.context/guides/engineering.md](.context/guides/engineering.md) - commands, TypeScript standards, build, tests, release flow, safety.
+- [.context/guides/writing-briefs.md](.context/guides/writing-briefs.md) - the brief -> design -> spec flow and how to write a brief.
+- [.context/guides/writing-designs.md](.context/guides/writing-designs.md) - how to write a design that splits a brief into specs.
+- [.context/guides/writing-specs.md](.context/guides/writing-specs.md) - how to write a spec for one shippable unit; shared language rules.
+- [.context/guides/doc-lifecycle.md](.context/guides/doc-lifecycle.md) - where briefs, designs, specs, and other in-flight docs are drafted, reviewed, and closed.
+- [.context/guides/pull-requests.md](.context/guides/pull-requests.md) - PR branch, title, body, size, linear vs. stacked.
+- [.context/guides/context-maintenance.md](.context/guides/context-maintenance.md) - altitude rule, protected paths, context PR procedure.
+- [.context/README.md](.context/README.md) - `.context/` layout: guides, reference, archive; other files in `guides/` come from the team profile.
 
 ## Stack
 
@@ -38,16 +41,16 @@ Cite exact script scope. Do not claim a command runs every test unless `package.
 - Strict TypeScript, ESM-first. `"type": "module"`.
 - **Public surface** lives in `src/index.ts`. Anything not re-exported there is private - deep imports are not part of the contract.
 - `package.json` ships an `"exports"` map (single entry by default) plus `"types"` pointing at `dist/index.d.ts`, and `"sideEffects": false` so consumers can tree-shake.
-- No `node:*` imports in `src/` (CLI file exempt - see `.context/engineering-guide.md`). Prefer standard ECMAScript APIs. Use `globalThis`, not `window` or `global`.
+- No `node:*` imports in `src/` (CLI file exempt - see `.context/guides/engineering.md`). Prefer standard ECMAScript APIs. Use `globalThis`, not `window` or `global`.
 - No `process.env`, `process.cwd`, or filesystem reads in library code. Configuration is taken as a function argument or constructor option. The host owns env.
 - No logger. Throw on error, return on success - the consuming app owns logging.
 - Public API is fully typed: `.d.ts` shipped from `dist/`. No `any` except at one isolated SDK boundary with a comment.
 
 ## Safety
 
-Do not read `.env`, `.secrets`, certs, tokens, DSNs, cloud credentials. Do not commit `.npmrc` containing auth tokens. Full list in `.context/engineering-guide.md`. Use `.env.example` for variable names only (rare for libraries).
+Do not read `.env`, `.secrets`, certs, tokens, DSNs, cloud credentials. Do not commit `.npmrc` containing auth tokens. Full list in `.context/guides/engineering.md`. Use `.env.example` for variable names only (rare for libraries).
 
-Search scope, "no settings" rule, and commit/changeset style live in [`.context/engineering-guide.md`](.context/engineering-guide.md).
+Search scope, "no settings" rule, and commit/changeset style live in [`.context/guides/engineering.md`](.context/guides/engineering.md).
 
 ## MCP Servers
 

@@ -69,9 +69,23 @@ test("scaffold dry-run with a preset prints the header and skips mise.toml when 
   const { code, stdout } = await ctx("scaffold", tmp, "--preset", "api-ts");
   expect(code).toBe(0);
   const lines = stdout.split("\n");
-  const accepted = [tmp, await realpath(tmp)].map((path) => `dry-run: ${path} (preset api-ts)`);
+  const accepted = [tmp, await realpath(tmp)].map((path) => `dry-run: ${path} (preset api-ts, profile local)`);
   expect(accepted).toContain(lines[0] as string);
   expect(lines.filter((line) => line.endsWith("mise.toml"))).toEqual([]);
+});
+
+test("scaffold without a preset prints the default profile", async () => {
+  const { code, stdout } = await ctx("scaffold", tmp);
+  expect(code).toBe(0);
+  const accepted = [tmp, await realpath(tmp)].map((path) => `dry-run: ${path} (profile local)`);
+  expect(accepted).toContain(stdout.split("\n")[0] as string);
+});
+
+test("scaffold with an unknown profile fails before writing", async () => {
+  const { code, stderr } = await ctx("scaffold", tmp, "--profile", "nope");
+  expect(code).toBe(1);
+  expect(stderr.startsWith("error: unknown profile 'nope'")).toBe(true);
+  expect(await readdir(tmp)).toEqual([]);
 });
 
 test("--version and -V print the package version", async () => {

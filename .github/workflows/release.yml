@@ -27,8 +27,8 @@ jobs:
             stage="build/$target"
             mkdir -p "$stage"
             bun build src/cli.ts --compile --target "bun-$target" --outfile "$stage/ctx"
-            cp -R presets templates "$stage/"
-            tar -czf "dist/ctx-$version-$target.tar.gz" -C "$stage" ctx presets templates
+            cp -R presets templates core profiles "$stage/"
+            tar -czf "dist/ctx-$version-$target.tar.gz" -C "$stage" ctx presets templates core profiles
           done
           ls -l dist
       - name: Create release
