@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, test } from "bun:test";
 import { mkdtemp, readdir, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import pkg from "../package.json" with { type: "json" };
 import { exists } from "../src/detect.ts";
 
 const CLI_PATH = join(import.meta.dir, "..", "src", "cli.ts");
@@ -71,4 +72,12 @@ test("scaffold dry-run with a preset prints the header and skips mise.toml when 
   const accepted = [tmp, await realpath(tmp)].map((path) => `dry-run: ${path} (preset api-ts)`);
   expect(accepted).toContain(lines[0] as string);
   expect(lines.filter((line) => line.endsWith("mise.toml"))).toEqual([]);
+});
+
+test("--version and -V print the package version", async () => {
+  for (const flag of ["--version", "-V"]) {
+    const { code, stdout } = await ctx(flag);
+    expect(code).toBe(0);
+    expect(stdout).toBe(`${pkg.version}\n`);
+  }
 });

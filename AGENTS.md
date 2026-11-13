@@ -2,7 +2,7 @@
 
 ## Project Context
 
-`ctx` = personal agent-context toolkit: stack-tailored presets + scaffolder, exposed as one Bun + TypeScript CLI (`ctx`) run from this checkout via `bin/ctx`. `ctx new` copies preset into new/empty repo; `ctx scaffold` renders generic context into existing repo from its metadata; `ctx scaffold --preset <name>` uses that preset's stack docs instead.
+`ctx` = personal agent-context toolkit: stack-tailored presets + scaffolder, exposed as one Bun + TypeScript CLI (`ctx`) run from this checkout via `bin/ctx` or as a released compiled binary (`src/paths.ts` finds `presets/` + `templates/` beside it, or at `$CTX_ROOT`). `ctx new` copies preset into new/empty repo; `ctx scaffold` renders generic context into existing repo from its metadata; `ctx scaffold --preset <name>` uses that preset's stack docs instead.
 
 More durable context in `.context/` (conventions in `.context/README.md`):
 
@@ -28,6 +28,7 @@ More durable context in `.context/` (conventions in `.context/README.md`):
 | `test/` | `bun test` suites with tmpdir fixtures. |
 | `mise.toml` / `hk.pkl` / `biome.json` | Toolchain pins + tasks, git hooks, lint/format config. |
 | `.github/workflows/ci.yml` | CI: `mise run check` via `jdx/mise-action`. |
+| `.github/workflows/release.yml` | On `v*` tags: `bun build --compile` per target, tar binary with `presets/` + `templates/`, `gh release create`. |
 
 ## Commands
 
@@ -43,8 +44,9 @@ Toolchain + tasks in `mise.toml`. First run: `mise trust && mise run setup`.
 CLI:
 
 - `ctx list` - list presets.
+- `ctx --version` / `-V` - print `package.json` version (embedded in compiled binaries).
 - `ctx new <dir> [--preset <name>] [--force]` - copy preset into `<dir>`.
-- `ctx scaffold [repo] [--write] [--force] [--preset <name>] [--agent-shim] [--package-overlays]` - dry-run (or write) generated context for repo; `--preset` uses preset stack docs with repo mise commands.
+- `ctx scaffold [repo] [--write] [--force] [--preset <name>] [--agent-shim] [--claude-shim] [--package-overlays]` - dry-run (or write) generated context for repo; `--preset` uses preset stack docs with repo mise commands.
 
 ## Standards
 

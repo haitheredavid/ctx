@@ -28,6 +28,7 @@ export type ScaffoldOptions = {
   write: boolean;
   force: boolean;
   agentShim: boolean;
+  claudeShim: boolean;
   packageOverlays: boolean;
   preset?: string;
 };
@@ -78,6 +79,11 @@ export async function scaffold(opts: ScaffoldOptions): Promise<ScaffoldResult[]>
 
   if (opts.agentShim) {
     files.push({ path: join(target, "AGENT.md"), content: render(await loadTemplate("AGENT.md.tmpl"), context) });
+  }
+
+  // Claude Code reads CLAUDE.md, not AGENTS.md; the import line pulls in the canonical guide.
+  if (opts.claudeShim) {
+    files.push({ path: join(target, "CLAUDE.md"), content: "@AGENTS.md\n" });
   }
 
   if (opts.packageOverlays) {

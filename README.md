@@ -2,15 +2,24 @@
 
 Personal agent-readable repo context: ten stack-tailored presets (`AGENTS.md`, `.context/`, mise-based devcontainer, `mise.toml` with pinned tools + tasks) plus scaffolder that infers same structure for existing repos. All runs through one Bun + TypeScript CLI, `ctx`, executed direct from this checkout.
 
-## Setup
+## Install
 
-Needs [mise](https://mise.jdx.dev).
+Needs [mise](https://mise.jdx.dev). Released binaries (macOS arm64, Linux arm64/x64) ship with `presets/` + `templates/` beside them:
+
+```bash
+mise use -g github:haitheredavid/ctx@<version>   # e.g. @0.1.0
+ctx --version
+```
+
+Set `CTX_ROOT` to point a binary at another checkout's `presets/` + `templates/`.
+
+### Dev install (from this checkout)
 
 ```bash
 mise trust && mise run setup
 ```
 
-Installs pinned toolchain + dev deps, git hooks via hk, symlinks `bin/ctx` into `~/.local/bin` (must be on `PATH`).
+Installs pinned toolchain + dev deps, git hooks via hk, symlinks `bin/ctx` into `~/.local/bin` (must be on `PATH`). Runs source directly; edits take effect immediately.
 
 ## Usage
 
@@ -37,6 +46,7 @@ ctx scaffold ~/projects/bar                      # dry-run (default repo: cwd)
 ctx scaffold ~/projects/bar --write              # write base files
 ctx scaffold ~/projects/bar --write --force      # overwrite existing files
 ctx scaffold ~/projects/bar --agent-shim         # also generate AGENT.md
+ctx scaffold ~/projects/bar --claude-shim        # also generate CLAUDE.md containing `@AGENTS.md`
 ctx scaffold ~/projects/bar --package-overlays   # AGENTS.md inside detected workspace packages
 ctx scaffold ~/projects/bar --preset api-ts      # preset stack docs; repo mise.toml tasks replace preset commands
 ```
@@ -78,7 +88,7 @@ Each preset drops:
 
 `.context/` two-tier lifecycle: durable **guides** at root never describe progress; ephemeral **active docs** carry in-flight design, deleted when work lands. See `.context/README.md` in any preset.
 
-`AGENTS.md` = canonical name. Some tools expect singular `AGENT.md` — generate as shim (`ctx scaffold --agent-shim`), not source of truth.
+`AGENTS.md` = canonical name. Some tools expect singular `AGENT.md` — generate as shim (`ctx scaffold --agent-shim`), not source of truth. Claude Code reads `CLAUDE.md`; `--claude-shim` writes one that just imports `AGENTS.md`.
 
 ## Development
 
@@ -90,5 +100,7 @@ All tasks in `mise.toml`:
 - `mise run typecheck` - `tsc --noEmit`.
 - `mise run test` - `bun test`.
 - `mise run check` - lint + typecheck + test (CI runs this).
+
+Releases: bump `version` in `package.json`, then push a matching `v<version>` tag. `.github/workflows/release.yml` compiles `ctx` for darwin-arm64, linux-arm64, linux-x64 and attaches `ctx-<version>-<os>-<arch>.tar.gz` (binary + `presets/` + `templates/`) to a GitHub release.
 
 See [`AGENTS.md`](AGENTS.md) for repo-internal conventions.

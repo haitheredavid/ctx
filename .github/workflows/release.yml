@@ -1,0 +1,37 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v5
+      - run: bun install --frozen-lockfile
+      - name: Check tag matches package.json
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          pkg="$(jq -r .version package.json)"
+          if [ "$version" != "$pkg" ]; then
+            echo "tag $GITHUB_REF_NAME does not match package.json version $pkg" >&2
+            exit 1
+          fi
+      - name: Build archives
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          for target in darwin-arm64 linux-arm64 linux-x64; do
+            stage="build/$target"
+            mkdir -p "$stage"
+            bun build src/cli.ts --compile --target "bun-$target" --outfile "$stage/ctx"
+            cp -R presets templates "$stage/"
+            tar -czf "dist/ctx-$version-$target.tar.gz" -C "$stage" ctx presets templates
+          done
+          ls -l dist
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.tar.gz --verify-tag --generate-notes

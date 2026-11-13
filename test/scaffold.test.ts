@@ -40,7 +40,15 @@ afterEach(async () => {
 });
 
 function opts(overrides: Partial<ScaffoldOptions> = {}): ScaffoldOptions {
-  return { target: tmp, write: false, force: false, agentShim: false, packageOverlays: false, ...overrides };
+  return {
+    target: tmp,
+    write: false,
+    force: false,
+    agentShim: false,
+    claudeShim: false,
+    packageOverlays: false,
+    ...overrides,
+  };
 }
 
 async function writeJson(path: string, value: unknown): Promise<void> {
@@ -107,6 +115,21 @@ test("write creates, rerun skips, force overwrites", async () => {
   const third = await scaffold(opts({ write: true, force: true }));
   expect(third.find((r) => r.relPath === "AGENTS.md")?.action).toBe("overwrite");
   expect(await readFile(join(tmp, "AGENTS.md"), "utf8")).toBe(generated);
+});
+
+test("claude shim plans CLAUDE.md importing AGENTS.md, skips it unless forced", async () => {
+  const dry = await scaffold(opts({ claudeShim: true }));
+  expect(contentOf(dry, "CLAUDE.md")).toBe("@AGENTS.md\n");
+  expect(await exists(join(tmp, "CLAUDE.md"))).toBe(false);
+
+  await writeFile(join(tmp, "CLAUDE.md"), "hand edited\n");
+  const skipped = await scaffold(opts({ claudeShim: true, write: true }));
+  expect(skipped.find((r) => r.relPath === "CLAUDE.md")?.action).toBe("skip");
+  expect(await readFile(join(tmp, "CLAUDE.md"), "utf8")).toBe("hand edited\n");
+
+  const forced = await scaffold(opts({ claudeShim: true, write: true, force: true }));
+  expect(forced.find((r) => r.relPath === "CLAUDE.md")?.action).toBe("overwrite");
+  expect(await readFile(join(tmp, "CLAUDE.md"), "utf8")).toBe("@AGENTS.md\n");
 });
 
 test("bun lockfile without mise uses bun commands and a toolchain TODO", async () => {

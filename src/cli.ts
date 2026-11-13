@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
+import pkg from "../package.json" with { type: "json" };
 import { isDirectory } from "./detect.ts";
 import { applyPreset, findPreset, listPresets, type Preset } from "./presets.ts";
 import { type ScaffoldOptions, scaffold } from "./scaffold.ts";
@@ -17,8 +18,13 @@ Commands:
     --force                    Overwrite existing files.
     --preset <name>            Use a preset's stack docs; repo commands replace preset commands when it has mise.toml.
     --agent-shim               Also generate AGENT.md as a compatibility shim.
+    --claude-shim              Also generate CLAUDE.md that imports AGENTS.md (@AGENTS.md).
     --package-overlays         Generate AGENTS.md inside detected workspace packages.
   help                         Show this help.
+
+Options:
+  -h, --help                   Show this help.
+  -V, --version                Print the ctx version.
 
 Base files: AGENTS.md,
 .context/{project-context,engineering-guide,writing-specs,writing-dds,writing-tdds,README}.md,
@@ -27,7 +33,7 @@ With --preset: the preset's files (including .devcontainer/), plus mise.toml whe
 `;
 
 // Flags in the order they first appear in USAGE, so the first offending flag is reported consistently.
-const FLAGS = ["preset", "force", "write", "agent-shim", "package-overlays"] as const;
+const FLAGS = ["preset", "force", "write", "agent-shim", "claude-shim", "package-overlays"] as const;
 type Flag = (typeof FLAGS)[number];
 
 const COMMANDS = new Map<string, { maxArgs: number; flags: readonly Flag[] }>([
@@ -43,15 +49,21 @@ async function main(argv: string[]): Promise<void> {
     strict: true,
     options: {
       help: { type: "boolean", short: "h" },
+      version: { type: "boolean", short: "V" },
       preset: { type: "string" },
       force: { type: "boolean" },
       write: { type: "boolean" },
       "agent-shim": { type: "boolean" },
+      "claude-shim": { type: "boolean" },
       "package-overlays": { type: "boolean" },
     },
   });
   const [command, ...rest] = positionals;
 
+  if (values.version) {
+    console.log(pkg.version);
+    return;
+  }
   if (values.help || command === undefined || command === "help") {
     console.log(USAGE);
     return;
@@ -79,6 +91,7 @@ async function main(argv: string[]): Promise<void> {
         write: values.write ?? false,
         force: values.force ?? false,
         agentShim: values["agent-shim"] ?? false,
+        claudeShim: values["claude-shim"] ?? false,
         packageOverlays: values["package-overlays"] ?? false,
         preset: values.preset,
       });
