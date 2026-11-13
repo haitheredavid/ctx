@@ -3,7 +3,15 @@ import { readdir, readFile } from "node:fs/promises";
 import { dirname, join, normalize } from "node:path";
 import { exists } from "../src/detect.ts";
 import { composeLayers, findLayer, layerEntries } from "../src/packs.ts";
-import { CORE_DIR, CTX_ROOT, PRESETS_DIR, PROFILES_DIR, TEMPLATES_DIR } from "../src/paths.ts";
+import {
+  AGENTS_DIR,
+  COMMANDS_DIR,
+  CORE_DIR,
+  CTX_ROOT,
+  PRESETS_DIR,
+  PROFILES_DIR,
+  TEMPLATES_DIR,
+} from "../src/paths.ts";
 
 const presetDirs = (await readdir(PRESETS_DIR, { withFileTypes: true }))
   .filter((entry) => entry.isDirectory())
@@ -50,9 +58,9 @@ test("profiles.json describes exactly the profile directories", async () => {
   expect(Object.keys(manifest).sort()).toEqual(profileDirs);
 });
 
-test("presets, templates, core, and profiles are ASCII-only", async () => {
+test("presets, templates, core, profiles, agents, and commands are ASCII-only", async () => {
   const offenders: string[] = [];
-  for (const root of [PRESETS_DIR, TEMPLATES_DIR, CORE_DIR, PROFILES_DIR]) {
+  for (const root of [PRESETS_DIR, TEMPLATES_DIR, CORE_DIR, PROFILES_DIR, AGENTS_DIR, COMMANDS_DIR]) {
     for (const entry of await readdir(root, { recursive: true, withFileTypes: true })) {
       if (!entry.isFile() || entry.name === ".DS_Store") continue;
       const path = join(entry.parentPath, entry.name);

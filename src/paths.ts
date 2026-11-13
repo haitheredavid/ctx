@@ -13,3 +13,5 @@ export const PRESETS_DIR = join(CTX_ROOT, "presets");
 export const PROFILES_DIR = join(CTX_ROOT, "profiles");
 export const CORE_DIR = join(CTX_ROOT, "core");
 export const TEMPLATES_DIR = join(CTX_ROOT, "templates", "agent-context");
+export const AGENTS_DIR = join(CTX_ROOT, "agents");
+export const COMMANDS_DIR = join(CTX_ROOT, "commands");

@@ -1,7 +1,9 @@
 import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { homedir } from "node:os";
+import { join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import pkg from "../package.json" with { type: "json" };
+import { HARNESSES, type Harness, type InstallAction, installAgents } from "./agents.ts";
 import { isDirectory } from "./detect.ts";
 import { defaultProfile, findLayer, type Layer, listLayers } from "./packs.ts";
 import { CTX_ROOT } from "./paths.ts";
@@ -24,6 +26,11 @@ Commands:
     --agent-shim               Also generate AGENT.md as a compatibility shim.
     --claude-shim              Also generate CLAUDE.md that imports AGENTS.md (@AGENTS.md).
     --package-overlays         Generate AGENTS.md inside detected workspace packages.
+  agents install [options]     Install ctx subagents and /ctx-* commands for omp, Claude Code, and Devin.
+    --harness <name>           omp, claude, or devin; repeat for several. Default: all three.
+    --home <dir>               Home directory to install under. Default: your home directory.
+    --write                    Write files. Default is dry-run.
+    --force                    Overwrite files whose content differs.
   help                         Show this help.
 
 Options:
@@ -38,13 +45,27 @@ With --preset: the preset's files (including .devcontainer/), plus mise.toml whe
 `;
 
 // Flags in the order they first appear in USAGE, so the first offending flag is reported consistently.
-const FLAGS = ["preset", "profile", "force", "write", "agent-shim", "claude-shim", "package-overlays"] as const;
+const FLAGS = [
+  "preset",
+  "profile",
+  "force",
+  "write",
+  "agent-shim",
+  "claude-shim",
+  "package-overlays",
+  "harness",
+  "home",
+] as const;
 type Flag = (typeof FLAGS)[number];
 
 const COMMANDS = new Map<string, { maxArgs: number; flags: readonly Flag[] }>([
   ["list", { maxArgs: 0, flags: [] }],
   ["new", { maxArgs: 1, flags: ["preset", "profile", "force"] }],
-  ["scaffold", { maxArgs: 1, flags: FLAGS }],
+  [
+    "scaffold",
+    { maxArgs: 1, flags: ["write", "force", "preset", "profile", "agent-shim", "claude-shim", "package-overlays"] },
+  ],
+  ["agents", { maxArgs: 1, flags: ["write", "force", "harness", "home"] }],
 ]);
 
 async function main(argv: string[]): Promise<void> {
@@ -62,6 +83,8 @@ async function main(argv: string[]): Promise<void> {
       "agent-shim": { type: "boolean" },
       "claude-shim": { type: "boolean" },
       "package-overlays": { type: "boolean" },
+      harness: { type: "string", multiple: true },
+      home: { type: "string" },
     },
   });
   const [command, ...rest] = positionals;
@@ -102,6 +125,9 @@ async function main(argv: string[]): Promise<void> {
         preset: values.preset,
         profile: values.profile,
       });
+    case "agents":
+      if (rest[0] !== "install") throw new Error(`unknown agents action '${rest[0] ?? ""}'. Available: install`);
+      return runAgentsInstall(values.harness, values.home, values.write ?? false, values.force ?? false);
   }
 }
 
@@ -181,6 +207,31 @@ async function runScaffold(
     else if (!opts.write)
       console.log(`${result.action === "overwrite" ? "would overwrite" : "would create"}: ${result.relPath}`);
     else console.log(`${result.action === "overwrite" ? "overwrote" : "created"}: ${result.relPath}`);
+  }
+}
+
+async function runAgentsInstall(
+  harnessNames: string[] | undefined,
+  homeArg: string | undefined,
+  write: boolean,
+  force: boolean,
+): Promise<void> {
+  for (const name of harnessNames ?? []) {
+    if (!(HARNESSES as readonly string[]).includes(name)) {
+      throw new Error(`unknown harness '${name}'. Available: ${HARNESSES.join(", ")}`);
+    }
+  }
+  const harnesses: Harness[] = HARNESSES.filter((h) => harnessNames === undefined || harnessNames.includes(h));
+  const home = homeArg === undefined ? homedir() : resolve(process.cwd(), homeArg);
+  console.log(`${write ? "write" : "dry-run"}: agents for ${harnesses.join(", ")} -> ${home}`);
+  const labels: Record<InstallAction, string> = {
+    create: write ? "created" : "would create",
+    overwrite: write ? "overwrote" : "would overwrite",
+    unchanged: "unchanged",
+    skip: "skip exists",
+  };
+  for (const result of await installAgents({ harnesses, home, write, force })) {
+    console.log(`${labels[result.action]}: ~/${relative(home, result.path)}`);
   }
 }
 

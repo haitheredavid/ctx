@@ -1,0 +1,22 @@
+{
+  "ctx-brief": {
+    "description": "Write a ctx brief draft (ctx-writer agent)",
+    "argumentHint": "<topic and what you know: problem, who, approver>"
+  },
+  "ctx-check": {
+    "description": "Audit this repo against its own ctx standards (ctx-standards agent, read-only)",
+    "argumentHint": "[path or focus]"
+  },
+  "ctx-design": {
+    "description": "Write a ctx design from an accepted brief (ctx-writer agent)",
+    "argumentHint": "<brief path, issue, or title> [notes]"
+  },
+  "ctx-new": {
+    "description": "Add ctx context to a new or existing project (ctx-scaffolder agent)",
+    "argumentHint": "[dir] [--preset <name>] [notes]"
+  },
+  "ctx-spec": {
+    "description": "Write a ctx spec for one design work-breakdown row, or from a brief when the design is skipped (ctx-writer agent)",
+    "argumentHint": "<design + row, or brief> [notes]"
+  }
+}

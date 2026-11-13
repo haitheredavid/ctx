@@ -1,0 +1,20 @@
+{
+  "ctx-scaffolder": {
+    "description": "Adds ctx agent context to a new or existing project with the ctx CLI (ctx new / ctx scaffold), then fills TODO markers from repo metadata. Give it the target directory and, optionally, a preset name.",
+    "role": "default",
+    "tools": ["read", "grep", "glob", "find", "bash", "edit", "write"]
+  },
+  "ctx-standards": {
+    "description": "Read-only audit of a repo against its own ctx standards (AGENTS.md hard rules, .context guides, in-flight docs). Reports violations with path:line; never edits.",
+    "role": "review",
+    "thinking": "high",
+    "tools": ["read", "grep", "glob", "find", "bash"]
+  },
+  "ctx-writer": {
+    "description": "Writes one ctx doc draft (brief, design, or spec) following the repo's own .context/guides and doc lifecycle. Give it the doc kind, the topic, and the source doc for a design or spec.",
+    "role": "plan",
+    "thinking": "high",
+    "tools": ["read", "grep", "glob", "find", "bash", "write", "edit"],
+    "spawns": "scout"
+  }
+}

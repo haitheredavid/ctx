@@ -59,6 +59,17 @@ Base files (generic path): core guides (`.context/README.md`, `.context/guides/{
 
 With `--preset <name>`, scaffold plans the preset's files instead of the generic templates. When the repo has its own `mise.toml`/`.mise.toml`, preset Commands sections are replaced with the repo's detected commands (mise tasks, else package scripts) and the preset's `mise.toml` is not written, even with `--force`; otherwise preset commands and `mise.toml` are kept as-is.
 
+### Subagents and commands for omp, Claude Code, and Devin
+
+```bash
+ctx agents install                     # dry-run for omp, claude, devin (default home: ~)
+ctx agents install --write             # write files
+ctx agents install --harness claude --write   # one harness; repeat --harness for several
+ctx agents install --write --force     # overwrite files whose content differs
+```
+
+`agents/` (`agents.json` + one body per subagent) and `commands/` (`commands.json` + one body per `/ctx-*` command) are the canonical sources. The installer renders each harness's native frontmatter: omp `~/.omp/agent/{agents,commands}/`, Claude Code `~/.claude/{agents,commands}/`, Devin `~/.config/devin/agents/` plus one skill per command in `~/.config/devin/skills/<name>/SKILL.md`. Identical files report `unchanged`; edited files are skipped unless `--force`; symlinked targets are skipped, and refused with `--force`.
+
 ### Layers, profiles, and packs
 
 Files compose in layers; a later layer replaces an earlier file at the same path:
