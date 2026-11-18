@@ -33,40 +33,40 @@ const linesStarting = (stdout: string, prefix: string) => stdout.split("\n").fil
 test("dry-run lists every file and writes nothing", async () => {
   const { code, stdout } = await install();
   expect(code).toBe(0);
-  expect(linesStarting(stdout, "would create:")).toHaveLength(24);
+  expect(linesStarting(stdout, "would create:")).toHaveLength(12);
   expect(await readdir(tmp)).toEqual([]);
 });
 
 test("--write renders each harness's native format", async () => {
   expect((await install("--write")).code).toBe(0);
-  const claudeWriter = await readFile(join(tmp, ".claude/agents/ctx-writer.md"), "utf8");
-  expect(claudeWriter).toContain("tools: Read, Grep, Glob, Bash, Write, Edit");
-  expect(claudeWriter).toContain("model: inherit");
-  const ompWriter = await readFile(join(tmp, ".omp/agent/agents/ctx-writer.md"), "utf8");
-  expect(ompWriter).toContain('model: "@plan"');
-  expect(ompWriter).toContain("spawns: scout");
+  const claudeStandards = await readFile(join(tmp, ".claude/agents/ctx-standards.md"), "utf8");
+  expect(claudeStandards).toContain("tools: Read, Grep, Glob, Bash");
+  expect(claudeStandards).toContain("model: inherit");
+  const ompStandards = await readFile(join(tmp, ".omp/agent/agents/ctx-standards.md"), "utf8");
+  expect(ompStandards).toContain('model: "@review"');
+  expect(ompStandards).toContain("thinking-level: high");
   const devinStandards = await readFile(join(tmp, ".config/devin/agents/ctx-standards.md"), "utf8");
   expect(devinStandards).toContain("  - exec");
   expect(devinStandards).not.toMatch(/^model:/m);
-  const devinBrief = await readFile(join(tmp, ".config/devin/skills/ctx-brief/SKILL.md"), "utf8");
-  expect(devinBrief).not.toContain("$ARGUMENTS");
-  expect(devinBrief).toContain("`/ctx-brief`");
-  expect(await readFile(join(tmp, ".claude/commands/ctx-brief.md"), "utf8")).toContain("$ARGUMENTS");
+  const devinCheck = await readFile(join(tmp, ".config/devin/skills/ctx-check/SKILL.md"), "utf8");
+  expect(devinCheck).not.toContain("$ARGUMENTS");
+  expect(devinCheck).toContain("`/ctx-check`");
+  expect(await readFile(join(tmp, ".claude/commands/ctx-check.md"), "utf8")).toContain("$ARGUMENTS");
 });
 
 test("reinstall is unchanged; edited files are skipped unless --force", async () => {
   await install("--write");
-  const path = join(tmp, ".claude/agents/ctx-writer.md");
+  const path = join(tmp, ".claude/agents/ctx-standards.md");
   const original = await readFile(path, "utf8");
-  expect(linesStarting((await install("--write")).stdout, "unchanged:")).toHaveLength(24);
+  expect(linesStarting((await install("--write")).stdout, "unchanged:")).toHaveLength(12);
 
   await appendFile(path, "x");
   const skipped = await install("--write");
-  expect(skipped.stdout).toContain("skip exists: ~/.claude/agents/ctx-writer.md");
+  expect(skipped.stdout).toContain("skip exists: ~/.claude/agents/ctx-standards.md");
   expect(await readFile(path, "utf8")).toBe(`${original}x`);
 
   const forced = await install("--write", "--force");
-  expect(forced.stdout).toContain("overwrote: ~/.claude/agents/ctx-writer.md");
+  expect(forced.stdout).toContain("overwrote: ~/.claude/agents/ctx-standards.md");
   expect(await readFile(path, "utf8")).toBe(original);
 });
 
@@ -85,7 +85,7 @@ test("--force refuses a symlinked target before writing anything", async () => {
   const outside = join(tmp, "outside.md");
   await writeFile(outside, "keep\n");
   await mkdir(join(tmp, ".claude/agents"), { recursive: true });
-  await symlink(outside, join(tmp, ".claude/agents/ctx-writer.md"));
+  await symlink(outside, join(tmp, ".claude/agents/ctx-standards.md"));
   const { code, stderr } = await install("--write", "--force");
   expect(code).toBe(1);
   expect(stderr).toContain("refusing to write through symlink");

@@ -9,12 +9,5 @@
     "role": "review",
     "thinking": "high",
     "tools": ["read", "grep", "glob", "find", "bash"]
-  },
-  "ctx-writer": {
-    "description": "Writes one ctx doc draft (brief, design, or spec) following the repo's own .context/guides and doc lifecycle. Give it the doc kind, the topic, and the source doc for a design or spec.",
-    "role": "plan",
-    "thinking": "high",
-    "tools": ["read", "grep", "glob", "find", "bash", "write", "edit"],
-    "spawns": "scout"
   }
 }
