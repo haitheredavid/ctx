@@ -1,8 +1,10 @@
 # Writing Designs
 
 A design takes one accepted brief (accepted after passing [Gate 1](writing-briefs.md#gate-1-brief-to-design)), decides direction, components, and data movement, and splits the work into specs.
+When the author already knows the scope, a design can start the work with an [Intent block](writing-briefs.md#intent-block) instead of a brief.
 A brief has 1-3 designs; see [Splitting a brief](#splitting-a-brief).
 For drafts, review, and closure, see [doc-lifecycle.md](doc-lifecycle.md).
+Draft in rounds with the [authoring loop](writing-briefs.md#authoring-loop); a partial draft is never ready, and a source brief must still be accepted first.
 
 ## Language
 
@@ -24,9 +26,10 @@ One deviation: short rationale paragraphs are allowed.
 ## Structure
 
 Use these sections, in order. Hard cap: ~250 lines.
+A design that starts the work opens with its [Intent block](writing-briefs.md#intent-block) before Summary.
 
 1. **Summary** - 2-4 sentences.
-   Link the brief and list the goal and follow-up IDs this design owns.
+   Link the brief, or point to the Intent block, and list the goal and follow-up IDs this design owns.
    Never restate goals.
 2. **Glossary** - one line per term.
    Specs copy entries verbatim.
@@ -38,8 +41,8 @@ Use these sections, in order. Hard cap: ~250 lines.
 6. **Decisions** - per decision: options considered (one line each), the choice, and why in <= 2 sentences.
    Include cross-cutting decisions here.
    Answer each owned follow-up affecting a spec here, citing its `F` ID, before that spec is accepted or implemented.
-   Answer all remaining follow-ups before the brief closes.
-   Decisions that outlive the project also go to the durable-decision home named in [doc-lifecycle.md](doc-lifecycle.md#lifecycle) before the brief closes.
+   Answer all remaining follow-ups before the work closes.
+   Decisions that outlive the project also go to the durable-decision home named in [doc-lifecycle.md](doc-lifecycle.md#lifecycle) before the work closes.
 7. **Work breakdown** - one row per spec:
 
    | Spec | Scope | Goal IDs | Depends on |
@@ -54,7 +57,7 @@ Use these sections, in order. Hard cap: ~250 lines.
    Mark items that block a spec `blocks <n>.<row>`.
    During drafting, list each unanswered owned follow-up here, cited by `F` ID.
    At design acceptance, list unresolved brief `can wait` questions here.
-   Resolve them before affected implementation, or transfer remaining non-blocking questions to owned linked issues before the brief closes.
+   Resolve them before affected implementation, or transfer remaining non-blocking questions to owned linked issues before the work closes.
 
 ## What a design leaves out
 

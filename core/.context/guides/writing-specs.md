@@ -2,20 +2,25 @@
 
 A spec is reviewed by a human and implemented by a coding agent.
 It pins every decision that crosses a contract boundary and stays silent on the rest.
-Its source is one row of a design work breakdown, or a brief when you [skip the design](writing-briefs.md#skip-the-design).
+Its source is one row of a design work breakdown, a brief when you [skip the design](writing-briefs.md#skip-the-design), or its own [Intent block](writing-briefs.md#intent-block) when the spec starts the work.
 For drafts, review, and closure, see [doc-lifecycle.md](doc-lifecycle.md).
+Draft in rounds with the [authoring loop](writing-briefs.md#authoring-loop).
+A spec with unresolved decisions stays a partial draft and is never reported ready.
+Known oversize work gets a split from the [sizing gate](#sizing-gate) before any spec is written.
 
 ## Gate 2: drafting and acceptance
 
 Before drafting, the source design must be accepted, and every design under the brief must be accepted.
 Together the designs must own every non-optional `G` and every `F` exactly once.
 When design is skipped, the source brief must be accepted instead.
+When the spec starts the work, it needs no prior acceptance; its Intent block is accepted with the spec.
 
 Before accepting or implementing the completed spec, check:
 
 - [ ] The glossary covers every term the spec uses.
 - [ ] The spec passes the sizing gate.
 - [ ] For a design source, the work breakdown names the spec, its scope, and dependencies.
+- [ ] For a spec that starts the work, the [Intent block](writing-briefs.md#intent-block) passes its acceptance check.
 - [ ] No open question blocks the spec, and every design follow-up affecting it is answered in Decisions.
 - [ ] For a designless spec, brief `can wait` questions are resolved and every follow-up is answered in Requirements.
 
@@ -35,10 +40,11 @@ Then stop and propose a split instead of writing one spec.
 ## Structure
 
 Use these sections, in order. Hard cap: ~250 lines.
+A spec that starts the work opens with its [Intent block](writing-briefs.md#intent-block) before Context.
 If a section holds nothing a reviewer would reject a PR over, write `None.`
 
 1. **Context** - 2-4 sentences on what exists and what is missing.
-   Link the source design or brief and list the goal IDs served.
+   Link the source design or brief, or point to the Intent block, and list the goal IDs served.
    Copy glossary entries verbatim from the design. Design skipped: write the glossary here.
    Design skipped: answer each brief follow-up in Requirements, citing its `F` ID.
 2. **Non-goals and forbidden approaches** - scope this work will not address.
